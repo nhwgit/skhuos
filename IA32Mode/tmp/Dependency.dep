@@ -1,0 +1,36 @@
+64bit.o: ../src/64bit.c ../src/64bit.h ../src/Type.h
+Descriptor.o: ../src/Descriptor.c ../src/64bit.h ../src/RegControl.h \
+ ../src/Type.h ../src/Descriptor.h ../src/Handler.h
+Disk.o: ../src/Disk.c ../src/Disk.h ../src/Type.h ../src/Sync.h \
+ ../src/portControl.h ../src/Print.h
+FAT.o: ../src/FAT.c ../src/FAT.h ../src/Type.h ../src/Disk.h \
+ ../src/Print.h ../src/String.h
+HandlerImp.o: ../src/HandlerImp.c ../src/Print.h ../src/Type.h \
+ ../src/Keyboard.h ../src/type.h ../src/PIC.h ../src/Process.h \
+ ../src/LinkedList.h ../src/Disk.h ../src/HandlerImp.h
+Keyboard.o: ../src/Keyboard.c ../src/Keyboard.h ../src/Type.h \
+ ../src/portControl.h ../src/Print.h ../src/Queue.h ../src/Sync.h
+LinkedList.o: ../src/LinkedList.c ../src/LinkedList.h ../src/Type.h
+Main.o: ../src/Main.c ../src/Type.h ../src/Print.h ../src/Descriptor.h \
+ ../src/RegControl.h ../src/Handler.h ../src/Memory.h ../src/Keyboard.h \
+ ../src/Queue.h ../src/Process.h ../src/LinkedList.h ../src/Disk.h
+Memory.o: ../src/Memory.c ../src/Memory.h ../src/Type.h ../src/Print.h
+PIC.o: ../src/PIC.c ../src/portControl.h ../src/Type.h ../src/PIC.h \
+ ../src/Print.h
+PIT.o: ../src/PIT.c ../src/PIT.h ../src/type.h ../src/portControl.h \
+ ../src/Type.h ../src/Print.h
+Print.o: ../src/Print.c ../src/Print.h ../src/Type.h ../src/Memory.h
+Process.o: ../src/Process.c ../src/Process.h ../src/Type.h \
+ ../src/LinkedList.h ../src/64bit.h ../src/Print.h ../src/Descriptor.h \
+ ../src/Sync.h ../src/ContextSwitching.h ../src/Queue.h ../src/Memory.h
+Queue.o: ../src/Queue.c ../src/Queue.h ../src/Type.h ../src/Memory.h \
+ ../src/Print.h
+Shell.o: ../src/Shell.c ../src/Shell.h ../src/Print.h ../src/Type.h \
+ ../src/String.h ../src/portControl.h ../src/Process.h \
+ ../src/LinkedList.h ../src/Disk.h ../src/editor.h
+String.o: ../src/String.c ../src/String.h
+Sync.o: ../src/Sync.c ../src/Sync.h ../src/Type.h ../src/RegControl.h \
+ ../src/Process.h ../src/LinkedList.h
+editor.o: ../src/editor.c ../src/editor.h ../src/Type.h ../src/FAT.h \
+ ../src/Print.h ../src/Keyboard.h ../src/String.h
+util.o: ../src/util.c ../src/util.h
