@@ -1,0 +1,5 @@
+32bit.o: ../src/32bit.c ../src/32bit.h ../src/Print.h ../src/Type.h
+Main.o: ../src/Main.c ../src/32bit.h ../src/Page.h ../src/Type.h \
+ ../src/Print.h ../src/SwitchToIA32.h
+Page.o: ../src/Page.c ../src/Page.h ../src/Type.h ../src/Print.h
+Print.o: ../src/Print.c ../src/Print.h ../src/Type.h
