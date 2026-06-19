@@ -1,225 +1,75 @@
-/**
- *  file    ImageMaker.c
- *  date    2008/12/16
- *  author  kkamagui (노현우 일부 수정)
- *          Copyright(c)2008 All rights reserved by kkamagui
- *  brief   부트 로더와 커널 이미지를 연결하고, 섹터 단위로 정렬해 주는 ImageMaker의
- *          소스 파일
- */
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <io.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
 
-#define BYTESOFSECTOR  512
+#define SECTOR_SIZE 512
+#define KERNEL_INFO_OFFSET 5 // 부트로더의 TOTALSECTORCOUNT 위치
 
-// 함수 선언
-int AdjustInSectorSize( int iFd, int iSourceSize );
-void WriteKernelInformation( int iTargetFd, int iTotalKernelSectorCount,
-        int iKernel32SectorCount );
-int CopyFile( int iSourceFd, int iTargetFd );
+int appendFile(FILE * image, const char * fileName);
+void writeKernelInformation(const char * imageName, int totalSectorCount, int kernel32SectorCount);
 
-/**
- *  Main 함수
-*/
-int main(int argc, char* argv[])
-{
-    int iSourceFd;
-    int iTargetFd, iTargetFd2;
-    int iBootLoaderSize;
-    int iKernel32SectorCount;
-    int iKernel64SectorCount;
-    int iSourceSize;
-        
-    // 커맨드 라인 옵션 검사
-    if( argc < 4 )
-    {
-        fprintf( stderr, "[ERROR] ImageMaker.exe BootLoader.bin Kernel32.bin Kernel64.bin\n" );
-        exit( -1 );
-    }
-    
-    // Disk.img 파일을 생성
-    if( ( iTargetFd = open( "../../Disk.img", O_RDWR | O_CREAT |  O_TRUNC |
-            O_BINARY, S_IREAD | S_IWRITE ) ) == -1 )
-    {
-        fprintf( stderr , "[ERROR] Disk.img open fail.\n" );
-        exit( -1 );
-    }
+int main(int argc, char * argv[]) {
+	if(argc < 5) {
+		fprintf(stderr, "usage: ImageMaker BootLoader.bin Kernel32.bin Kernel64.bin Disk.img\n");
+		return -1;
+	}
 
-    //--------------------------------------------------------------------------
-    // 부트 로더 파일을 열어서 모든 내용을 디스크 이미지 파일로 복사
-    //--------------------------------------------------------------------------
-    printf( "[INFO] Copy boot loader to image file\n" );
-    if( ( iSourceFd = open( argv[ 1 ], O_RDONLY | O_BINARY ) ) == -1 )
-    {
-        fprintf( stderr, "[ERROR] %s open fail\n", argv[ 1 ] );
-        exit( -1 );
-    }
+	FILE * image = fopen(argv[4], "wb");
+	if(image == NULL) {
+		fprintf(stderr, "%s open fail\n", argv[4]);
+		return -1;
+	}
 
-    iSourceSize = CopyFile( iSourceFd, iTargetFd );
-    close( iSourceFd );
-    
-    // 파일 크기를 섹터 크기인 512바이트로 맞추기 위해 나머지 부분을 0x00 으로 채움
-    iBootLoaderSize = AdjustInSectorSize( iTargetFd , iSourceSize );
-    printf( "[INFO] %s size = [%d] and sector count = [%d]\n",
-            argv[ 1 ], iSourceSize, iBootLoaderSize );
+	appendFile(image, argv[1]);
+	int kernel32SectorCount = appendFile(image, argv[2]);
+	int kernel64SectorCount = appendFile(image, argv[3]);
+	fclose(image);
 
-    //--------------------------------------------------------------------------
-    // 32비트 커널 파일을 열어서 모든 내용을 디스크 이미지 파일로 복사
-    //--------------------------------------------------------------------------
-    printf( "[INFO] Copy protected mode kernel to image file\n" );
-    if( ( iSourceFd = open( argv[ 2 ], O_RDONLY | O_BINARY ) ) == -1 )
-    {
-        fprintf( stderr, "[ERROR] %s open fail\n", argv[ 2 ] );
-        exit( -1 );
-    }
-
-    iSourceSize = CopyFile( iSourceFd, iTargetFd );
-    close( iSourceFd );
-    
-    // 파일 크기를 섹터 크기인 512바이트로 맞추기 위해 나머지 부분을 0x00 으로 채움
-    iKernel32SectorCount = AdjustInSectorSize( iTargetFd, iSourceSize );
-    printf( "[INFO] %s size = [%d] and sector Count = [%d]\n",
-                argv[ 2 ], iSourceSize, iKernel32SectorCount );
-
-    //--------------------------------------------------------------------------
-    // 64비트 커널 파일을 열어서 모든 내용을 디스크 이미지 파일로 복사
-    //--------------------------------------------------------------------------
-    printf( "[INFO] Copy IA-32e mode kernel to image file\n" );
-    if( ( iSourceFd = open( argv[ 3 ], O_RDONLY | O_BINARY ) ) == -1 )
-    {
-        fprintf( stderr, "[ERROR] %s open fail\n", argv[ 3 ] );
-        exit( -1 );
-    }
-
-    iSourceSize = CopyFile( iSourceFd, iTargetFd );
-    close( iSourceFd );
-
-    // 파일 크기를 섹터 크기인 512바이트로 맞추기 위해 나머지 부분을 0x00 으로 채움
-    iKernel64SectorCount = AdjustInSectorSize( iTargetFd, iSourceSize );
-    printf( "[INFO] %s size = [%d] and sector count = [%d]\n",
-                argv[ 3 ], iSourceSize, iKernel64SectorCount );
-
-    //--------------------------------------------------------------------------
-    // 디스크 이미지에 커널 정보를 갱신
-    //--------------------------------------------------------------------------
-    printf( "[INFO] Start to write kernel information\n" );
-    // 부트섹터의 5번째 바이트부터 커널에 대한 정보를 넣음
-
-    close(iTargetFd);
-
-    if( ( iTargetFd2 = open( "../../Disk.img", O_RDWR |
-                O_BINARY, S_IREAD | S_IWRITE ) ) == -1 )
-        {
-            fprintf( stderr , "[ERROR] Disk.img open fail.\n" );
-            exit( -1 );
-        }
-
-    WriteKernelInformation( iTargetFd2, iKernel32SectorCount + iKernel64SectorCount,
-            iKernel32SectorCount );
-    printf( "[INFO] Image file create complete\n" );
-
-    close( iTargetFd2 );
-    return 0;
+	writeKernelInformation(argv[4], kernel32SectorCount + kernel64SectorCount, kernel32SectorCount);
+	printf("%s create complete\n", argv[4]);
+	return 0;
 }
 
-/**
- *  현재 위치부터 512바이트 배수 위치까지 맞추어 0x00으로 채움
-*/
-int AdjustInSectorSize( int iFd, int iSourceSize )
-{
-    int i;
-    int iAdjustSizeToSector;
-    char cCh;
-    int iSectorCount;
+int appendFile(FILE * image, const char * fileName) { // 512바이트 배수로 패딩 후 섹터 수 반환
+	FILE * src = fopen(fileName, "rb");
+	if(src == NULL) {
+		fprintf(stderr, "%s open fail\n", fileName);
+		exit(-1);
+	}
 
-    iAdjustSizeToSector = iSourceSize % BYTESOFSECTOR;
-    cCh = 0x00;
-    
-    if( iAdjustSizeToSector != 0 )
-    {
-        iAdjustSizeToSector = 512 - iAdjustSizeToSector;
-        printf( "[INFO] File size [%lu] and fill [%u] byte\n", iSourceSize, 
-            iAdjustSizeToSector );
-        for( i = 0 ; i < iAdjustSizeToSector ; i++ )
-        {
-            write( iFd , &cCh , 1 );
-        }
-    }
-    else
-    {
-        printf( "[INFO] File size is aligned 512 byte\n" );
-    }
-    
-    // 섹터 수를 되돌려줌
-    iSectorCount = ( iSourceSize + iAdjustSizeToSector ) / BYTESOFSECTOR;
-    return iSectorCount;
+	char buffer[SECTOR_SIZE];
+	long size = 0;
+	while(1) {
+		int readCount = fread(buffer, 1, sizeof(buffer), src);
+		if(readCount <= 0)
+			break;
+		if(fwrite(buffer, 1, readCount, image) != readCount) {
+			fprintf(stderr, "%s write fail\n", fileName);
+			exit(-1);
+		}
+		size += readCount;
+	}
+	fclose(src);
+
+	int padding = (SECTOR_SIZE - (size % SECTOR_SIZE)) % SECTOR_SIZE;
+	for(int i=0; i<padding; i++)
+		fputc(0x00, image);
+
+	int sectorCount = (size + padding) / SECTOR_SIZE;
+	printf("%s: %ld byte, %d sector\n", fileName, size, sectorCount);
+	return sectorCount;
 }
 
-/**
- *  부트 로더에 커널에 대한 정보를 삽입
-*/
-void WriteKernelInformation( int iTargetFd, int iTotalKernelSectorCount,
-        int iKernel32SectorCount )
-{
-    unsigned short usData;
-    long lPosition;
-    
-    // 파일의 시작에서 5바이트 떨어진 위치가 커널의 총 섹터 수 정보를 나타냄
-    /*lPosition = lseek( iTargetFd, 5, SEEK_SET );
-    printf("%ld\n", lPosition);
-    //return;
-    if( lPosition == -1 )
-    {
-        fprintf( stderr, "lseek fail. Return value = %d, errno = %d, %d\n", 
-            lPosition, errno, SEEK_SET );
-        exit( -1 );
-    }*/
+void writeKernelInformation(const char * imageName, int totalSectorCount, int kernel32SectorCount) {
+	FILE * image = fopen(imageName, "rb+");
+	if(image == NULL) {
+		fprintf(stderr, "%s open fail\n", imageName);
+		exit(-1);
+	}
 
-    lseek(iTargetFd, 5, SEEK_SET);
-    // 부트 로더를 제외한 총 섹터 수 및 보호 모드 커널의 섹터 수 저장
-    usData = ( unsigned short ) iTotalKernelSectorCount;
-    write(iTargetFd, &usData, 2);
-    usData = ( unsigned short ) iKernel32SectorCount;
-    write(iTargetFd, &usData, 2);
-
-    printf( "[INFO] Total sector count except boot loader [%d]\n", 
-        iTotalKernelSectorCount );
-    printf( "[INFO] Total sector count of protected mode kernel [%d]\n",
-        iKernel32SectorCount );
+	fseek(image, KERNEL_INFO_OFFSET, SEEK_SET);
+	unsigned short data = (unsigned short)totalSectorCount;
+	fwrite(&data, 2, 1, image);
+	data = (unsigned short)kernel32SectorCount;
+	fwrite(&data, 2, 1, image);
+	fclose(image);
 }
-
-/**
- *  소스 파일(Source FD)의 내용을 목표 파일(Target FD)에 복사하고 그 크기를 되돌려줌
-*/
-int CopyFile( int iSourceFd, int iTargetFd )
-{
-    int iSourceFileSize;
-    int iRead;
-    int iWrite;
-    char vcBuffer[ BYTESOFSECTOR ];
-
-    iSourceFileSize = 0;
-    while( 1 )
-    {
-        iRead   = read( iSourceFd, vcBuffer, sizeof( vcBuffer ) );
-        iWrite  = write( iTargetFd, vcBuffer, iRead );
-
-        if( iRead != iWrite )
-        {
-            fprintf( stderr, "[ERROR] iRead != iWrite.. \n" );
-            exit(-1);
-        }
-        iSourceFileSize += iRead;
-        
-        if( iRead != sizeof( vcBuffer ) )
-        {
-            break;
-        }
-    }
-    return iSourceFileSize;
-} 

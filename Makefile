@@ -24,7 +24,7 @@ Util:
 
 Disk.img: $(BASEDIRECTORY)/BootLoader/BootLoader.bin $(BASEDIRECTORY)/ProtectedMode/ProtectedMode.bin $(BASEDIRECTORY)/IA32Mode/IA32Mode.bin
 	@echo Disk Image Build Start
-	$(BASEDIRECTORY)/util/ImageMaker/ImageMaker.exe $^
+	$(BASEDIRECTORY)/util/ImageMaker/ImageMaker.exe $^ Disk.img
 	@echo All Build Complete
 
 clean:
