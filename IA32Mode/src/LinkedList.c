@@ -1,5 +1,6 @@
 #include "LinkedList.h"
 #include "Type.h"
+#include "Print.h"
 
 void initList(LinkedList * list) {
 	list->count = 0;
@@ -25,7 +26,7 @@ void printList(LinkedList * list) {
 	Node * cur = (Node*)list->head;
 	int count = 1;
 	while(cur!=NULL) {
-		printInt(count++);
+		printInt(count++, 10);
 		printString(": ");
 		printInt(cur->id, 10);
 		puts("");
@@ -36,7 +37,6 @@ void printList(LinkedList * list) {
 void * removeList(LinkedList * list, int id) {
 	Node * pre = (Node*)list->head;
 	Node * cur = pre;
-	(list->count)--;
 	while(cur!=NULL) {
 		if(cur->id==id) {
 			if(cur == list->head && cur ==list->tail) {
@@ -45,10 +45,13 @@ void * removeList(LinkedList * list, int id) {
 			}
 			else if(cur == list->head)
 				list->head = cur->next;
-			else if(cur == list->tail)
+			else if(cur == list->tail) {
 				list->tail = pre;
+				pre->next = NULL;
+			}
 			else
 				pre->next = cur->next;
+			(list->count)--;
 			return cur;
 		}
 		pre = cur;

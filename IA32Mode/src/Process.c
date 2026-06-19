@@ -64,7 +64,7 @@ void initScheduler(void) {
 	allocProcessTable[pidCountIdx++] = 1;
 	initList(&(scheduler.processList));
 	scheduler.runningProcess = pcb;
-	initQueue(&exitProcessQueue, queueBuffer, EXIT_QUEUE_COUNT, sizeof(QWORD));
+	initQueue(&exitProcessQueue, queueBuffer, EXIT_QUEUE_COUNT, sizeof(int)); // link.id 크기와 일치
 	createProcess((QWORD)garbegeProcessCollector);
 }
 
