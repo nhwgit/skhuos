@@ -6,9 +6,9 @@
 //size
 #define TABLE_COUNT 512
 #define PAGE_TABLE_SIZE 0x1000
-#define MAX_MEMORY_SIZE 4 // ´ÜÀ§ : gb
-#define MAX_CODE_SIZE 2 // ´ÜÀ§ : gb
-#define KERNEL_SIZE 32 // ´ÜÀ§ : mb
+#define MAX_MEMORY_SIZE 4 // ë‹¨ìœ„ : gb
+#define MAX_CODE_SIZE 2 // ë‹¨ìœ„ : gb
+#define KERNEL_SIZE 32 // ë‹¨ìœ„ : mb
 
 //address
 #define PML4_BASE_ADDRESS 0x100000

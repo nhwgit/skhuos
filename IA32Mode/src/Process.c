@@ -11,7 +11,7 @@ static WORD pidCountIdx = 0;
 static ProcessScheduler scheduler = {0};
 static allocProcessTable[PROCESS_MAXCOUNT] = {0};
 static Queue exitProcessQueue = {0};
-static QWORD queueBuffer[100]; // pid ´ã´Â´Ù.
+static QWORD queueBuffer[100]; // pid ë‹´ëŠ”ë‹¤.
 static Mutex processListMutex = {0};
 
 void testCode(void) {
@@ -68,7 +68,7 @@ void initScheduler(void) {
 	createProcess((QWORD)garbegeProcessCollector);
 }
 
-PCB * createProcess(QWORD entryPoint) { // ÆäÀÌÂ¡ ¼³Á¤ Ãß°¡ ÇÊ¿ä]
+PCB * createProcess(QWORD entryPoint) { // í˜ì´ì§• ì„¤ì • ì¶”ê°€ í•„ìš”]
 	bool preIf = setIf(FALSE);
 	int tryCount = 0;
 	while(allocProcessTable[(pidCountIdx)%PROCESS_MAXCOUNT]==1) {

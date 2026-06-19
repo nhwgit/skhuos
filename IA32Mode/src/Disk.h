@@ -62,7 +62,7 @@
 #define DRIVERHEAD_MASTER 0x00
 
 #define DIGITALOUTPUT_SRST	0x04
-#define DIGITALOUTPUT_nIEN	0x02 // 0ю╦╥н ╪Ёа╓гь╬ъ юнем╥╢ф╝ ╧ъ╩Щ
+#define DIGITALOUTPUT_nIEN	0x02 // 0Л°╪К║° Л└╓Л═∙М∙╢Л∙╪ Л²╦М└╟К÷╫М┼╦ К╟°Л┐²
 
 typedef struct diskInformation {
 	WORD config;

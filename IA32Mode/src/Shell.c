@@ -20,7 +20,7 @@ static char * command[] = {
 		"editor fileName"
 };
 
-static QWORD stack[300] = {0}; // ÀÓ½Ã
+static QWORD stack[300] = {0}; // ìž„ì‹œ
 static PCB process[2] = {0};
 Monitor monitor = {0};
 
@@ -58,7 +58,7 @@ void printAccountName(const char * str) {
 	printString(">");
 }
 
-void executeCommand(const char * cmd) { // ÇâÈÄ °£°áÇÑ ÇüÅÂ·Î °³¼± ¿¹Á¤
+void executeCommand(const char * cmd) { // í–¥í›„ ê°„ê²°í•œ í˜•íƒœë¡œ ê°œì„  ì˜ˆì •
 	if(memcmp(cmd, "clear", strlen(cmd))==0)
 		clear();
 	else if(memcmp(cmd, "help", strlen(cmd))==0)
@@ -105,7 +105,7 @@ void help(void) {
 		puts(command[i]);
 }
 
-void memUsed(void) { // ·¥ »ç¿ë·®
+void memUsed(void) { // ëž¨ ì‚¬ìš©ëŸ‰
 	printMemoryRate();
 }
 
@@ -115,7 +115,7 @@ void reboot(void) {
 	setPort(0x60, 0x00);
 }
 
-/*void startProcess(void) { // ÀÓ½Ã
+/*void startProcess(void) { // ìž„ì‹œ
 	setUpProcess(&(process[1]), (QWORD)testCode, (QWORD *)&stack, sizeof(stack));
 	switchContext(&(process[0].context), &(process[1].context));
 }*/

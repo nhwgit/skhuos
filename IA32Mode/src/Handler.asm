@@ -270,7 +270,7 @@ IV20: ; RETCException
     LOAGREG
 	iretq
 
-;   ���ͷ�Ʈ �ڵ鷯
+;   인터럽트 핸들러
 
 IV32: ; Timer
     SAVEREG

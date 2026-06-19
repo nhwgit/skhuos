@@ -19,7 +19,7 @@ void InitializePML4Table(void) {
 	}
 }
 
-void InitializePageDirectoryPointerTable(void) { //´ÜÀ§ : gb
+void InitializePageDirectoryPointerTable(void) { //ë‹¨ìœ„ : gb
 	PdpEntry * pdpEntry = (PdpEntry *)PDPTABLE_BASE_ADDRESS;
 	for(int i=0; i<MAX_MEMORY_SIZE; i++) {
 		int pageTableAddress = PDTABLE_BASE_ADDRESS + (i*PAGE_TABLE_SIZE);
@@ -44,7 +44,7 @@ void InitilizePageDirectoryTable(void) {
 
 }
 
-void InitilizePageTable(void) { // Ä¿³Î¿µ¿ª ÀÌÈÄ ±âº»ÀûÀ¸·Î È°¼ºÈ­ ¾ÈµÅÀÖ´Ù.
+void InitilizePageTable(void) { // ì»¤ë„ì˜ì—­ ì´í›„ ê¸°ë³¸ì ìœ¼ë¡œ í™œì„±í™” ì•ˆë¼ìžˆë‹¤.
 	PtEntry * ptEntry = (PtEntry *)PTABLE_BASE_ADDRESS;
 	for(int i=0; i<KERNEL_SIZE*512; i++) {
 		int physicalAddress = i*0x1000;
