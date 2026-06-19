@@ -113,11 +113,11 @@ void setClusterLinkTable(int idx, int data) {
 }
 
 void readCluster(int offset, const BYTE* buffer) {
-	readSector(TRUE, TRUE, CLUSTER_SIZE/SECTOR_SIZE, fatInfor.dataAddress+(offset*CLUSTER_SIZE), buffer);
+	readSector(TRUE, TRUE, CLUSTER_SIZE/SECTOR_SIZE, fatInfor.dataAddress+(offset*(CLUSTER_SIZE/SECTOR_SIZE)), buffer);
 }
 
 void writeCluster(int offset, BYTE* buffer) {
-	writeSector(TRUE, TRUE, CLUSTER_SIZE/SECTOR_SIZE, fatInfor.dataAddress+(offset*CLUSTER_SIZE), buffer);
+	writeSector(TRUE, TRUE, CLUSTER_SIZE/SECTOR_SIZE, fatInfor.dataAddress+(offset*(CLUSTER_SIZE/SECTOR_SIZE)), buffer);
 }
 
 void createFile(const char * fileName) {

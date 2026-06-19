@@ -78,7 +78,7 @@ bool readInformation(bool isPrimary, bool isMaster) {
 
 
 	if(!waitInterrupt(isPrimary)) {
-		if(getPort(portAddress[isPrimary][STATUS]&STATUS_ERR)==STATUS_ERR) {
+		if((getPort(portAddress[isPrimary][STATUS])&STATUS_ERR)==STATUS_ERR) {
 			releaseLock(&diskMutex);
 			return FALSE;
 		}
@@ -89,6 +89,7 @@ bool readInformation(bool isPrimary, bool isMaster) {
 	for(int sector=0; sector<256; sector++)
 		((WORD *)diskPointer)[sector] = getPortWord(portAddress[isPrimary][DATA]);
 	releaseLock(&diskMutex);
+	return TRUE;
 }
 
 int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer) {
