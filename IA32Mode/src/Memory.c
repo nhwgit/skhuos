@@ -87,7 +87,7 @@ void memorySizeCheck(void) {
 		*currentAddress = previousValue;
 		currentAddress += (0x100000 / sizeof(DWORD));
 	}
-	totalMemory = totalMemory / 0x100000;
+	totalMemory = (int)(QWORD)currentAddress / 0x100000; // 단위: MB
 }
 
 int getTotalMemory(void) {
