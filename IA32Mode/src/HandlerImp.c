@@ -26,7 +26,7 @@ void timerHandler(int vectorNumber) {
 
 void keyboardHandler(int vectorNumber) {
 	//puts("interrupt occur!");
-	if(isOutputBufferFull) {
+	if(isOutputBufferFull()) {
 		BYTE scanCode = getScanCode();
 		inputQueue(scanCode);
 	}

@@ -192,7 +192,6 @@ IV12: ; StackSeg
     iretq
 
 IV13: ; GeneralProtection
-	jmp $
     SAVEREG
 
     mov rdi, 13

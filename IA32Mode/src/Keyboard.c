@@ -165,7 +165,7 @@ BYTE scanToASCII(BYTE scanCode) {
 		return 0;
 	}
 
-	else if(scanCode >=0x80)
+	else if(scanCode >= sizeof(keyMappingTable)/sizeof(keyMappingTable[0]))
 		return 0;
 	return keyMappingTable[scanCode][shiftOn];
 }
