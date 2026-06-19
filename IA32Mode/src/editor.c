@@ -16,6 +16,10 @@ void runEditor(const char * name) {
 			break;
 		}
 	}
+	if(clusterIdx==MAX_FILECOUNT) {
+		puts("File was not found");
+		return;
+	}
 	readCluster(fileInfo[clusterIdx].clusterIdx, buffer2);
 	clear();
 
@@ -27,10 +31,11 @@ void runEditor(const char * name) {
 	while(1) {
 		if(getQueue(&data)) {
 			if(data==ENTER) {
-				int strIdxNew = (strIdx+80) - (strIdx-strIdx%80);
-				while(strIdx <= strIdxNew) {
-					buffer2[strIdx] = ' ';
-				}
+				int strIdxNew = strIdx - strIdx%80 + 80; // 다음 80배수까지 공백 채움
+				while(strIdx < strIdxNew)
+					buffer2[strIdx++] = ' ';
+				buffer2[strIdx] = '\0';
+				moveToNextLine();
 				continue;
 			}
 			else if(data==BACK_SPACE) {
