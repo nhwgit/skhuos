@@ -15,10 +15,6 @@
 #define PAGE_LOWER4B_FLAGS_A       	 0x00000020
 #define PAGE_UPPER4B_FLAGS_EXB       0x80000000
 
-static int bestIdx;
-static int usingMemory;
-static char memory[0x3][0x200][0x20];
-
 typedef struct pageEntry
 {
     DWORD lower4Byte;
@@ -26,7 +22,7 @@ typedef struct pageEntry
 } Pml4Entry, PdpEntry, PdEntry, PtEntry;
 
 void initMemoryBitmap(void);
-void AllocMemory(void);
+void printMemoryRate(void);
 void memcpy(void * dest, const void * src, int size);
 int memcmp(const void * mem1, const void * mem2, int size);
 void memsetZero(const void * mem, int size);

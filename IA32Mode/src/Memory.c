@@ -3,6 +3,7 @@
 #include "Type.h"
 
 static int bestIdx;
+static int usingMemory;
 static char memory[0x3][0x200][0x20];
 
 static int totalMemory;

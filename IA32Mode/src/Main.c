@@ -8,6 +8,10 @@
 #include "Queue.h"
 #include "Process.h"
 #include "Disk.h"
+#include "PIC.h"
+#include "PIT.h"
+#include "FAT.h"
+#include "Shell.h"
 
 const char * switchToIA32eMode = "Switch to IA-32e mode";
 const char * successBooting = "Success Booting";

@@ -93,5 +93,7 @@ bool readInformation(bool primary, bool master);
 void setDiskInterruptFlag(bool isPrimary, bool isSecondary);
 int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer);
 int writeSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer);
+int getTotalSector(void);
+DiskInformation * getDiskInformation(void);
 
 #endif

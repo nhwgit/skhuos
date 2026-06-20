@@ -3,6 +3,8 @@
 #include "Print.h"
 #include "Keyboard.h"
 #include "String.h"
+#include "Shell.h"
+#include "Memory.h"
 
 static BYTE buffer1[4096] = {0};
 static BYTE buffer2[4096] = {0};

@@ -4,6 +4,11 @@
 #include "Process.h"
 #include "Disk.h"
 #include "editor.h"
+#include "Keyboard.h"
+#include "Memory.h"
+#include "FAT.h"
+
+static const char * accountName = "NHW";
 
 static char * command[] = {
 		"help",

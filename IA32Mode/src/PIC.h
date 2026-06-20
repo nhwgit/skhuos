@@ -1,5 +1,6 @@
 #ifndef __PIC_H__
 #define __PIC_H__
+#include "Type.h"
 
 //state
 #define INITIAL 0x00

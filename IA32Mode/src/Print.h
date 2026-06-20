@@ -19,8 +19,10 @@ typedef struct videoCharacter {
 #define BACK_SPACE 0x08
 
 void viewCharacter(BYTE ch);
+void viewCharacterXY(BYTE ch, int line, int x);
 void moveToNextLine(void);
 void printString(const char* str);
+void printStringLine(const char* str, int line);
 void puts(const char* str);
 void printInt(int num, int radix);
 int printStateAndReturn(bool state);

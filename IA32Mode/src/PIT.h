@@ -1,7 +1,7 @@
 #ifndef __PIT_H__
 #define __PIT_H__
 
-#include "type.h"
+#include "Type.h"
 
 #define COUNTER0	0x40
 #define COUNTER1	0x41
@@ -33,7 +33,6 @@ void sleep(long us);
 int usToClock(QWORD us);
 int msToClock(QWORD ms);
 void initilizePIT(int clock, bool periodic);
-int timeToClock(WORD us);
 WORD readCounter0(void);
 
 #endif

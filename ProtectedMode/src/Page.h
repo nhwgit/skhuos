@@ -42,6 +42,7 @@ typedef struct pageEntry
 void InitializePageTable(void);
 void InitializePML4Table(void);
 void InitializePageDirectoryPointerTable(void);
+void InitilizePageDirectoryTable(void);
 void InitilizePageTable(void);
 
 #endif

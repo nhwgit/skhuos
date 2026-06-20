@@ -1,6 +1,6 @@
 #include "Print.h"
 #include "Keyboard.h"
-#include "type.h"
+#include "Type.h"
 #include "PIC.h"
 #include "Process.h"
 #include "Disk.h"

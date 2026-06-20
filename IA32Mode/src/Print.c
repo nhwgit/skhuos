@@ -1,5 +1,6 @@
 #include "Print.h"
 #include "Memory.h"
+#include "util.h"
 
 static int currentPoint=0xB8460;
 static int alphabetDigit[10] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};

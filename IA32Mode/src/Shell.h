@@ -10,19 +10,20 @@ typedef struct monitor {
 	VideoCharacter vc[4000];
 	int cp;
 }Monitor;
-const char * accountName = "NHW";
 void startShell(void);
 void executeCommand(const char * cmd);
 void printAccountName(const char * str);
+void clear(void);
 void help(void);
 void memUsed(void);
 void reboot(void);
-void startProcess(void);
+void processTest(void);
 void printDiskCapacity(void);
 void mountExecute(void);
 void formatting(void);
 void ls(void);
 void touch(const char * name);
 void rm(const char * name);
+void editor(const char * name);
 
 #endif

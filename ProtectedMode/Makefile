@@ -1,5 +1,5 @@
 NASM32 = nasm
-GCC32 = x86_64-pc-linux-gcc.exe -c -m32 -ffreestanding
+GCC32 = x86_64-pc-linux-gcc.exe -c -m32 -ffreestanding -Werror=implicit-function-declaration
 LD32 = x86_64-pc-linux-ld.exe -melf_i386 -T ../elf_i386.x -nostdlib -e Main -Ttext 0x10200
 
 OBJCOPY32 = x86_64-pc-linux-objcopy -j .text -j .data -j .rodata -j .bss -S -O binary

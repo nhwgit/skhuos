@@ -81,8 +81,6 @@ typedef struct processScheduler {
 void setUpProcess(PCB * pcb, const QWORD entryPoint, const QWORD * stackAddress, const QWORD stackSize);
 void testCode(void);
 void initScheduler(void);
-void setRunningProcess(PCB * pcb);
-void addProcess(PCB * pcb);
 PCB * createProcess(QWORD entry, QWORD arg);
 void schedule(void);
 void timeoutSchedule(void);
