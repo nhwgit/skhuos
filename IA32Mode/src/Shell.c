@@ -120,265 +120,39 @@ void reboot(void) {
 	switchContext(&(process[0].context), &(process[1].context));
 }*/
 
-void process0(void) {
-	char data[81] = "        ZZZZZZZZZZZZZZ@&$*%)@_(%&#(!)*%(@)#!ZZZZZZZZZZZZRETWZZZ8";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 0, i);
-		schedule();
-	}
-	exitProcess();
-}
+static const char * bannerData[] = {
+		"        ZZZZZZZZZZZZZZ@&$*%)@_(%&#(!)*%(@)#!ZZZZZZZZZZZZRETWZZZ8",
+		"        ZyZZZZZZZZZZZZ ________*&$$     yDB9ZZZZZZZZZZZZZZRETFZjZ",
+		"        Z                   Welcome To skhuOS,                 ZW",
+		"        Z                 ZZB   EZ        ZZMHR                ZW",
+		"        Z               ZZZZZ    j8y      ZDZZZZDF             ZW",
+		"        Z              ZZZZEEZZZ    58     ZZZZZZZB            ZW",
+		"        Z             ZZZZZZZ   DFVFDBDF   WZ      Z           Z j",
+		"        Z            Z  Z       8Z        BZZZZZZZZZ           ZW",
+		"        Z            ZjZ wZ E   yj         5ZZZZ98Z77          ZW",
+		"        Z            Z  D    ZZZZ,D           ZZEZ77           ZW",
+		"        Z            Zw    BGRZZZZZ           zZZZ77           ZW",
+		"        Z             Z,   DZZZXVE    ZZ       ZZ77            ZW",
+		"        Z              ZZ  BZB9245       ,y    DZ7             Z j",
+		"        Z               wZZW  j  _RGB_       ,ZZy              ZW |23",
+		"        Z                 RTV WEZ8EZZZYZEWGUF                  ZW   .'[]",
+		"        Z                                                     Zw       */OF",
+		"        ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZjZZZ///OOOO          \\",
+		"        ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ==OOOO +*          |",
+		"        W                                                      we    /  __|__\\",
+		"      yw                                                        wy   |    |  |",
+		"    yW@@@@@@@@@@@@@@@   D8zzzzzzzzzz95           wwwwwwwwwwwwwwww    \\ _____ /",
+		"  yjwwwwwwwwwwwwwwww    DyWWWWW yD               WWWWWWwwwwwwwwwwwwwwww",
+		" ZZZZZZZZZZZZ @$((@)$)@)#@_ %*($,,,,UIUUI  wj   BZZZZZZ    SKHUCOMPUTER",
+		"GRGREGBYFGL;;SDIFDK SKHU ZZANGZZANG @($*#$)@0#';[.'$2849DKFKDLS;;FDLFLDDFGJGGD"
+};
 
-void process1(void) {
-	char data[81] = "        ZyZZZZZZZZZZZZ ________*&$$     yDB9ZZZZZZZZZZZZZZRETFZjZ";
+void bannerProcess(QWORD line) {
+	const char * data = bannerData[line];
 	for(int i=0; data[i]!=NULL && i<=80; i++) {
 		int cnt=0;
 		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 1, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process2(void) {
-	char data[81] = "        Z                   Welcome To skhuOS,                 ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 2, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process3(void) {
-	char data[81] = "        Z                 ZZB   EZ        ZZMHR                ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 3, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process4(void) {
-	char data[81] = "        Z               ZZZZZ    j8y      ZDZZZZDF             ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 4, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process5(void) {
-	char data[81] = "        Z              ZZZZEEZZZ    58     ZZZZZZZB            ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 5, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process6(void) {
-	char data[81] = "        Z             ZZZZZZZ   DFVFDBDF   WZ      Z           Z j";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 6, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process7(void) {
-	char data[81] = "        Z            Z  Z       8Z        BZZZZZZZZZ           ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 7, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process8(void) {
-	char data[81] = "        Z            ZjZ wZ E   yj         5ZZZZ98Z77          ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 8, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process9(void) {
-	char data[81] = "        Z            Z  D    ZZZZ,D           ZZEZ77           ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 9, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process10(void) {
-	char data[81] = "        Z            Zw    BGRZZZZZ           zZZZ77           ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 10, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process11(void) {
-	char data[81] = "        Z             Z,   DZZZXVE    ZZ       ZZ77            ZW";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 11, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process12(void) {
-	char data[81] = "        Z              ZZ  BZB9245       ,y    DZ7             Z j";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 12, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process13(void) {
-	char data[81] = "        Z               wZZW  j  _RGB_       ,ZZy              ZW |23";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 13, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process14(void) {
-	char data[81] = "        Z                 RTV WEZ8EZZZYZEWGUF                  ZW   .'[]";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 14, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process15(void) {
-	char data[81] = "        Z                                                     Zw       */OF";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 15, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process16(void) {
-	char data[81] = "        ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZjZZZ///OOOO          \\";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 16, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process17(void) {
-	char data[81] = "        ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ==OOOO +*          |";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 17, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process18(void) {
-	char data[81] = "        W                                                      we    /  __|__\\";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 18, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process19(void) {
-	char data[81] = "      yw                                                        wy   |    |  |";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 19, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process20(void) {
-	char data[81] = "    yW@@@@@@@@@@@@@@@   D8zzzzzzzzzz95           wwwwwwwwwwwwwwww    \\ _____ /";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 20, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process21(void) {
-	char data[81] = "  yjwwwwwwwwwwwwwwww    DyWWWWW yD               WWWWWWwwwwwwwwwwwwwwww";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 21, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process22(void) {
-	char data[81] = " ZZZZZZZZZZZZ @$((@)$)@)#@_ %*($,,,,UIUUI  wj   BZZZZZZ    SKHUCOMPUTER";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 22, i);
-		schedule();
-	}
-	exitProcess();
-}
-
-void process23(void) {
-	char data[81] = "GRGREGBYFGL;;SDIFDK SKHU ZZANGZZANG @($*#$)@0#';[.'$2849DKFKDLS;;FDLFLDDFGJGGD";
-	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
-		viewCharacterXY(data[i], 23, i);
+		viewCharacterXY(data[i], line, i);
 		schedule();
 	}
 	exitProcess();
@@ -386,30 +160,8 @@ void process23(void) {
 
 void processTest(void) {
 	clear();
-	createProcess((QWORD)process13);
-	createProcess((QWORD)process5);
-	createProcess((QWORD)process22);
-	createProcess((QWORD)process23);
-	createProcess((QWORD)process8);
-	createProcess((QWORD)process18);
-	createProcess((QWORD)process14);
-	createProcess((QWORD)process19);
-	createProcess((QWORD)process7);
-	createProcess((QWORD)process0);
-	createProcess((QWORD)process17);
-	createProcess((QWORD)process15);
-	createProcess((QWORD)process20);
-	createProcess((QWORD)process16);
-	createProcess((QWORD)process4);
-	createProcess((QWORD)process11);
-	createProcess((QWORD)process2);
-	createProcess((QWORD)process3);
-	createProcess((QWORD)process1);
-	createProcess((QWORD)process6);
-	createProcess((QWORD)process21);
-	createProcess((QWORD)process12);
-	createProcess((QWORD)process9);
-	createProcess((QWORD)process10);
+	for(int i=0; i<sizeof(bannerData)/sizeof(char*); i++)
+		createProcess((QWORD)bannerProcess, i);
 	cursorLine(24);
 }
 

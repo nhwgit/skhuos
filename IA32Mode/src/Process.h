@@ -83,7 +83,7 @@ void testCode(void);
 void initScheduler(void);
 void setRunningProcess(PCB * pcb);
 void addProcess(PCB * pcb);
-PCB * createProcess(QWORD entry);
+PCB * createProcess(QWORD entry, QWORD arg);
 void schedule(void);
 void timeoutSchedule(void);
 void exitProcess(void);

@@ -65,10 +65,10 @@ void initScheduler(void) {
 	initList(&(scheduler.processList));
 	scheduler.runningProcess = pcb;
 	initQueue(&exitProcessQueue, queueBuffer, EXIT_QUEUE_COUNT, sizeof(int)); // link.id 크기와 일치
-	createProcess((QWORD)garbegeProcessCollector);
+	createProcess((QWORD)garbegeProcessCollector, 0);
 }
 
-PCB * createProcess(QWORD entryPoint) { // 페이징 설정 추가 필요]
+PCB * createProcess(QWORD entryPoint, QWORD arg) { // 페이징 설정 추가 필요]
 	bool preIf = setIf(FALSE);
 	int tryCount = 0;
 	while(allocProcessTable[(pidCountIdx)%PROCESS_MAXCOUNT]==1) {
@@ -83,6 +83,7 @@ PCB * createProcess(QWORD entryPoint) { // 페이징 설정 추가 필요]
 	PCB * curProcess = (PCB *)(PCB_POOL_ADDRESS+sizeof(PCB)*pidCountIdx);
 	curProcess->link.id = pidCountIdx;
 	setUpProcess(curProcess, entryPoint, stackAddress, 0x2000);
+	curProcess->context.reg[REG_RDI] = arg; // 진입 함수의 첫번째 인자
 	//acquireLock(&processListMutex);
 	insertList(&(scheduler.processList), curProcess);
 	PtEntry * page = (PtEntry *)PT_ENTRY_ADDRESS;
