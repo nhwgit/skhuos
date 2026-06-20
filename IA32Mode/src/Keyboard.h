@@ -10,8 +10,6 @@
 
 #define LED_STATE_COMMAND 0xED
 
-#define QUEUE_SIZE	30
-
 //Change LED
 #define NUMLOCK 0x00
 #define CAPSLOCK 0x01

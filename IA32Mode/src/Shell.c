@@ -36,7 +36,7 @@ void startShell(void) {
 	printAccountName(accountName);
 	while(1) {
 		if(getQueue(&data)) {
-			if(data==ENTER) {
+			if(data==KEY_ENTER) {
 				puts("");
 				executeCommand(commandBuffer);
 				bufferIndex = 0;
@@ -45,7 +45,7 @@ void startShell(void) {
 				printAccountName(accountName);
 				continue;
 			}
-			else if(data==BACK_SPACE) {
+			else if(data==KEY_BACKSPACE) {
 				if(bufferIndex==0) continue;
 				else commandBuffer[--bufferIndex] = '\0';
 			}

@@ -3,8 +3,9 @@
 
 typedef enum { FALSE, TRUE } bool;
 
-#define BYTE    unsigned char
-#define WORD    unsigned short
-#define DWORD   unsigned int
+typedef unsigned char	BYTE;
+typedef unsigned short	WORD;
+typedef unsigned int	DWORD;
+
 #define NULL 0
 #endif

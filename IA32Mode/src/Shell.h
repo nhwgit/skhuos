@@ -2,8 +2,6 @@
 #define __SHELL_H__
 #include "Print.h"
 
-#define ENTER		0x0A
-#define BACK_SPACE	0x08
 #define MULTITASKING_TIME	500000
 
 typedef struct monitor {
