@@ -3,11 +3,6 @@ SEGMENT .text
 
 extern testHandler, keyboardHandler, interruptHandler, timerHandler, disk1Handler, disk2Handler
 
-global IV00, IV01, IV02, IV03, IV04, IV05, IV06, IV07, IV08, IV09
-global IV10, IV11, IV12, IV13, IV14, IV15, IV16, IV17, IV18, IV19, IV20
-global IV32, IV33, IV34, IV35, IV36, IV37, IV38, IV39
-global IV40, IV41, IV42, IV43, IV44, IV45, IV46, IV47, IV48
-
 %macro SAVEREG 0
     push r15
 	push r14
@@ -39,9 +34,7 @@ global IV40, IV41, IV42, IV43, IV44, IV45, IV46, IV47, IV48
     mov fs, ax
 %endmacro
 
-
-
-%macro LOAGREG 0
+%macro LOADREG 0
     pop gs
 	pop fs
 	pop rax
@@ -66,359 +59,68 @@ global IV40, IV41, IV42, IV43, IV44, IV45, IV46, IV47, IV48
 	pop r15
 %endmacro
 
-IV00: ;divide error
+; 에러 코드가 없는 벡터 (벡터 번호, 핸들러 함수)
+%macro ISR 2
+global IV%1
+IV%1:
     SAVEREG
-    mov rdi, 0
-    call testHandler;
-
-    LOAGREG
+    mov rdi, %1
+    call %2
+    LOADREG
     iretq
+%endmacro
 
-IV01: ; debug error
+; 에러 코드가 있는 벡터 (벡터 번호, 핸들러 함수)
+%macro ISR_ERRCODE 2
+global IV%1
+IV%1:
     SAVEREG
-
-    mov rdi, 1
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV02: ; RNMI
-    SAVEREG
-
-    mov rdi, 2
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV03: ; BreakPoint
-    SAVEREG
-
-    mov rdi, 3
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV04: ; Overflow
-    SAVEREG
-
-    mov rdi, 4
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV05: ; BoundRangeExceeded
-    SAVEREG
-
-    mov rdi, 5
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV06: ; InvalidOpcode
-    SAVEREG
-
-    mov rdi, 6
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV07: ; DeviceNotAvailable
-    SAVEREG
-
-
-    mov rdi, 7
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV08: ; DoubleFault
-    SAVEREG
-
-    mov rdi, 8
+    mov rdi, %1
     mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
+    call %2
+    LOADREG
     add rsp, 8
     iretq
-
-IV09: ; CoprocessorSegmentOverrun
-    SAVEREG
-
-    mov rdi, 9
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV10: ; InvalidTSS
-    SAVEREG
-
-    mov rdi, 10
-    mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
-    add rsp, 8
-    iretq
-
-IV11: ; SegmentNotPresent
-    SAVEREG
-
-    mov rdi, 11
-    mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
-    add rsp, 8
-    iretq
-
-IV12: ; StackSeg
-    SAVEREG
-
-    mov rdi, 12
-    mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
-    add rsp, 8
-    iretq
-
-IV13: ; GeneralProtection
-    SAVEREG
-
-    mov rdi, 13
-    mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
-    add rsp, 8
-    iretq
-
-IV14: ; PageFault
-    SAVEREG
-
-    mov rdi, 14
-    mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
-    add rsp, 8
-    iretq
-
-IV15:
-    SAVEREG
-
-    mov rdi, 15
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV16: ; FPUError
-    SAVEREG
-
-    mov rdi, 16
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV17: ; AlignmentCheck
-    SAVEREG
-
-    mov rdi, 17
-    mov rsi, qword [ rbp + 8 ]
-    call testHandler
-
-    LOAGREG
-    add rsp, 8
-    iretq
-
-IV18: ; MachineCheck
-    SAVEREG
-
-    mov rdi, 18
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV19: ; SIMDError
-    SAVEREG
-
-    mov rdi, 19
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV20: ; RETCException
-    SAVEREG
-
-    mov rdi, 20
-    call testHandler
-
-    LOAGREG
-	iretq
-
-;   인터럽트 핸들러
-
-IV32: ; Timer
-    SAVEREG
-
-    mov rdi, 32
-    call timerHandler
-
-    LOAGREG
-    iretq
-
-IV33: ; Keyboard
-    SAVEREG
-    mov rdi, 33
-    call keyboardHandler
-
-    LOAGREG
-    iretq
-
-IV34: ; SlavePIC
-    SAVEREG
-
-    mov rdi, 34
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV35: ; Serial2
-    SAVEREG
-
-    mov rdi, 35
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV36: ; Serial1
-    SAVEREG
-
-    mov rdi, 36
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV37: ; Paraller2
-    SAVEREG
-
-    mov rdi, 37
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV38: ; Floppy
-    SAVEREG
-
-    mov rdi, 38
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV39: ; Parallel1
-    SAVEREG
-
-    mov rdi, 39
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV40: ; RTC
-    SAVEREG
-
-    mov rdi, 40
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV41:
-    SAVEREG
-
-    mov rdi, 41
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV42:
-    SAVEREG
-
-    mov rdi, 42
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV43:
-    SAVEREG
-
-    mov rdi, 43
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV44: ; Mouse
-    SAVEREG
-
-    mov rdi, 44
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV45: ; Coprocessor
-    SAVEREG
-
-    mov rdi, 45
-    call testHandler
-
-    LOAGREG
-    iretq
-
-IV46: ; HDD1
-    SAVEREG
-
-    mov rdi, 46
-    call disk1Handler
-
-    LOAGREG
-    iretq
-
-IV47: ; HDD2
-    SAVEREG
-
-    mov rdi, 47
-    call disk2Handler
-
-    LOAGREG
-    iretq
-
-IV48: ; ETCInterrupt
-    SAVEREG
-
-    mov rdi, 48
-    call testHandler
-
-    LOAGREG
-    iretq
+%endmacro
+
+; 예외 핸들러
+ISR         00, testHandler ; divide error
+ISR         01, testHandler ; debug error
+ISR         02, testHandler ; RNMI
+ISR         03, testHandler ; BreakPoint
+ISR         04, testHandler ; Overflow
+ISR         05, testHandler ; BoundRangeExceeded
+ISR         06, testHandler ; InvalidOpcode
+ISR         07, testHandler ; DeviceNotAvailable
+ISR_ERRCODE 08, testHandler ; DoubleFault
+ISR         09, testHandler ; CoprocessorSegmentOverrun
+ISR_ERRCODE 10, testHandler ; InvalidTSS
+ISR_ERRCODE 11, testHandler ; SegmentNotPresent
+ISR_ERRCODE 12, testHandler ; StackSeg
+ISR_ERRCODE 13, testHandler ; GeneralProtection
+ISR_ERRCODE 14, testHandler ; PageFault
+ISR         15, testHandler
+ISR         16, testHandler ; FPUError
+ISR_ERRCODE 17, testHandler ; AlignmentCheck
+ISR         18, testHandler ; MachineCheck
+ISR         19, testHandler ; SIMDError
+ISR         20, testHandler ; RETCException
+
+; 인터럽트 핸들러
+ISR 32, timerHandler    ; Timer
+ISR 33, keyboardHandler ; Keyboard
+ISR 34, testHandler     ; SlavePIC
+ISR 35, testHandler     ; Serial2
+ISR 36, testHandler     ; Serial1
+ISR 37, testHandler     ; Parallel2
+ISR 38, testHandler     ; Floppy
+ISR 39, testHandler     ; Parallel1
+ISR 40, testHandler     ; RTC
+ISR 41, testHandler
+ISR 42, testHandler
+ISR 43, testHandler
+ISR 44, testHandler     ; Mouse
+ISR 45, testHandler     ; Coprocessor
+ISR 46, disk1Handler    ; HDD1
+ISR 47, disk2Handler    ; HDD2
+ISR 48, testHandler     ; ETCInterrupt
