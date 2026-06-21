@@ -1,6 +1,8 @@
 BASEDIRECTORY = ../..
 
-all: BootLoader ProtectedMode IA32Mode Disk.img
+.PHONY: all BootLoader ProtectedMode IA32Mode Util clean
+
+all: BootLoader ProtectedMode IA32Mode Util Disk.img
 	
 BootLoader:
 	@echo Build Boot Loader
@@ -19,10 +21,10 @@ IA32Mode:
 
 Util:
 	@echo Build Util
-	makc -C $(BASEDIRECTORY)/Util
+	make -C $(BASEDIRECTORY)/util
 	@echo Build Complete
 
-Disk.img: $(BASEDIRECTORY)/BootLoader/BootLoader.bin $(BASEDIRECTORY)/ProtectedMode/ProtectedMode.bin $(BASEDIRECTORY)/IA32Mode/IA32Mode.bin
+Disk.img: $(BASEDIRECTORY)/BootLoader/BootLoader.bin $(BASEDIRECTORY)/ProtectedMode/ProtectedMode.bin $(BASEDIRECTORY)/IA32Mode/IA32Mode.bin | Util
 	@echo Disk Image Build Start
 	$(BASEDIRECTORY)/util/ImageMaker/ImageMaker.exe $^ Disk.img
 	@echo All Build Complete
@@ -30,5 +32,6 @@ Disk.img: $(BASEDIRECTORY)/BootLoader/BootLoader.bin $(BASEDIRECTORY)/ProtectedM
 clean:
 	make -C $(BASEDIRECTORY)/BootLoader clean
 	make -C $(BASEDIRECTORY)/ProtectedMode clean
-	make -c $(BASEDIRECTORY)/util clean
-	rm -f $(BASEDIRECTORY)/Disk.img
+	make -C $(BASEDIRECTORY)/IA32Mode clean
+	make -C $(BASEDIRECTORY)/util clean
+	rm -f Disk.img

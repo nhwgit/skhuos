@@ -1,3 +1,5 @@
+.PHONY: all ImageMaker clean
+
 all: ImageMaker
 
 ImageMaker:
