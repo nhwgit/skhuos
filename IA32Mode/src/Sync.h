@@ -4,8 +4,8 @@
 
 #pragma pack(push, 1)
 typedef struct mutex {
-	volatile DWORD pid;
-	volatile WORD avaliable; // TRUE/FALSE
+	volatile int pid; // 소유자 없으면 -1
+	volatile WORD available; // TRUE/FALSE
 	volatile WORD count;
 } Mutex;
 #pragma pack(pop)

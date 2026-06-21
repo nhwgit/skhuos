@@ -20,7 +20,9 @@ void testCode(void) {
 }
 
 void exitProcess(void) {
+	bool preIf = setIf(FALSE);
 	enQueue(&exitProcessQueue, &scheduler.runningProcess->link.id);
+	setIf(preIf);
 	schedule();
 	while(1);
 }
@@ -29,10 +31,13 @@ void garbegeProcessCollector(void) {
 	int pid;
 	while(1) {
 		if(!queueIsEmpty(&exitProcessQueue)) {
+			bool preIf = setIf(FALSE);
 			deQueue(&exitProcessQueue, &pid);
 			removeList(&(scheduler.processList), pid);
+			allocProcessTable[pid] = 0; // pid 슬롯 반환
 			PtEntry * page = (PtEntry *)PTABLE_BASE_ADDRESS;
 			page[KERNEL_SIZE+pid*2].lower4Byte &= ~PAGE_LOWER4B_FLAGS_P;
+			setIf(preIf);
 		}
 	}
 }
@@ -77,10 +82,10 @@ PCB * createProcess(QWORD entryPoint, QWORD arg) { // 페이징 설정 추가 �
 		}
 		pidCountIdx = (pidCountIdx+1)%PROCESS_MAXCOUNT;
 	}
-	QWORD * stackAddress = (QWORD *)(PROCESS_STACK_BASE + 0x3000*(pidCountIdx));
+	QWORD * stackAddress = (QWORD *)(PROCESS_STACK_BASE + PROCESS_STACK_INTERVAL*(pidCountIdx));
 	PCB * curProcess = (PCB *)(PCB_POOL_ADDRESS+sizeof(PCB)*pidCountIdx);
 	curProcess->link.id = pidCountIdx;
-	setUpProcess(curProcess, entryPoint, stackAddress, 0x2000);
+	setUpProcess(curProcess, entryPoint, stackAddress, PROCESS_STACK_SIZE);
 	curProcess->context.reg[REG_RDI] = arg; // 진입 함수의 첫번째 인자
 	insertList(&(scheduler.processList), curProcess);
 	PtEntry * page = (PtEntry *)PTABLE_BASE_ADDRESS;

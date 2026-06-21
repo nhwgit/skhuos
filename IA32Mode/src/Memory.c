@@ -71,8 +71,7 @@ int memcmp(const void * mem1, const void * mem2, int size) {
 	return 0;
 }
 
-void memsetZero(const void * mem, int size) {
-	BYTE tmp;
+void memsetZero(void * mem, int size) {
 	for(int i=0; i<size; i++) {
 		((BYTE*)mem)[i] = 0;
 	}

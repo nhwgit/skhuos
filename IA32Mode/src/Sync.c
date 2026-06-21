@@ -15,20 +15,20 @@ bool setIf(bool interrupt) {
 }
 
 void initMutex(Mutex * mutex) {
-	mutex->avaliable = TRUE;
+	mutex->available = TRUE;
 	mutex->count = 0;
 	mutex->pid = -1;
 }
 
 void acquireLock(Mutex * mutex) {
-    WORD currentPid = getRunningPid();
+    int currentPid = getRunningPid();
 
-    if (mutex->avaliable == FALSE && mutex->pid == currentPid) {
+    if (mutex->available == FALSE && mutex->pid == currentPid) {
         mutex->count++;
         return;
     }
 
-    while (__sync_bool_compare_and_swap(&(mutex->avaliable), TRUE, FALSE) == FALSE) {
+    while (__sync_bool_compare_and_swap(&(mutex->available), TRUE, FALSE) == FALSE) {
         schedule();
     }
     mutex->pid = currentPid;
@@ -36,9 +36,9 @@ void acquireLock(Mutex * mutex) {
 }
 
 void releaseLock(Mutex * mutex) {
-    WORD currentPid = getRunningPid();
+    int currentPid = getRunningPid();
 
-    if (mutex->pid != currentPid || mutex->avaliable == TRUE) {
+    if (mutex->pid != currentPid || mutex->available == TRUE) {
         return;
     }
 
@@ -46,7 +46,7 @@ void releaseLock(Mutex * mutex) {
 
     if (mutex->count == 0) {
         mutex->pid = -1;
-        __sync_synchronize(); 
-        mutex->avaliable = TRUE;
+        __sync_synchronize();
+        mutex->available = TRUE;
     }
 }
