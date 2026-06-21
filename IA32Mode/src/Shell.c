@@ -9,22 +9,67 @@
 #include "Memory.h"
 #include "FAT.h"
 
+typedef struct shellCommand {
+	const char * name;
+	const char * usage;
+	void (*func)(const char * arg);
+} ShellCommand;
+
+static void help(const char * arg);
+static void clearCommand(const char * arg);
+static void memUsed(const char * arg);
+static void reboot(const char * arg);
+static void printDiskCapacity(const char * arg);
+static void multiTasking(const char * arg);
+static void mountCommand(const char * arg);
+static void formatting(const char * arg);
+static void ls(const char * arg);
+static void touch(const char * arg);
+static void rm(const char * arg);
+static void editor(const char * arg);
+static void processTest(void);
+
+static const ShellCommand commandTable[] = {
+		{"help", "help", help},
+		{"clear", "clear", clearCommand},
+		{"memUsed", "memUsed", memUsed},
+		{"reboot", "reboot", reboot},
+		{"diskCapacity", "diskCapacity", printDiskCapacity},
+		{"multiTasking", "multiTasking", multiTasking},
+		{"mount", "mount", mountCommand},
+		{"formatting", "formatting", formatting},
+		{"ls", "ls", ls},
+		{"touch", "touch fileName", touch},
+		{"rm", "rm fileName", rm},
+		{"editor", "editor fileName", editor}
+};
+
 static const char * accountName = "NHW";
 
-static char * command[] = {
-		"help",
-		"clear",
-		//"memUsed",
-		"reboot",
-		"diskCapacity",
-		"multiTasking",
-		"mount",
-		"formatting",
-		"ls",
-		"touch fileName",
-		"rm fileName",
-		"editor fileName"
-};
+static void printAccountName(const char * str) {
+	printString(str);
+	printString(">");
+}
+
+static void executeCommand(const char * cmd) {
+	char name[100] = {0};
+	int idx = 0;
+	for(; cmd[idx]!=' ' && cmd[idx]!='\0'; idx++)
+		name[idx] = cmd[idx];
+	name[idx] = '\0';
+	if(idx==0)
+		return;
+	const char * arg = (cmd[idx]==' ') ? (cmd+idx+1) : (cmd+idx);
+
+	for(int i=0; i<sizeof(commandTable)/sizeof(ShellCommand); i++) {
+		if(strcmp(name, commandTable[i].name)==0) {
+			commandTable[i].func(arg);
+			return;
+		}
+	}
+	printString(cmd);
+	printString(" is not found!");
+}
 
 void startShell(void) {
 	int bufferIndex = 0;
@@ -55,66 +100,60 @@ void startShell(void) {
 	}
 }
 
-void printAccountName(const char * str) {
-	printString(str);
-	printString(">");
+static void help(const char * arg) {
+	for(int i=0; i<sizeof(commandTable)/sizeof(ShellCommand); i++)
+		puts(commandTable[i].usage);
 }
 
-void executeCommand(const char * cmd) { // 향후 간결한 형태로 개선 예정
-	if(memcmp(cmd, "clear", strlen(cmd))==0)
-		clear();
-	else if(memcmp(cmd, "help", strlen(cmd))==0)
-		help();
-	else if(memcmp(cmd, "memUsed", strlen(cmd))==0)
-		memUsed();
-	else if(memcmp(cmd, "reboot", strlen(cmd))==0)
-		reboot();
-	else if(memcmp(cmd, "diskCapacity", strlen(cmd))==0)
-		printDiskCapacity();
-	else if(memcmp(cmd, "multiTasking", strlen(cmd))==0)
-		processTest();
-	else if(memcmp(cmd, "mount", strlen(cmd))==0)
-		mountExecute();
-	else if(memcmp(cmd, "formatting", strlen(cmd))==0)
-		formatting();
-	else if(memcmp(cmd, "ls", strlen(cmd))==0)
-		ls();
-	else if(memcmp(cmd, "touch", 5)==0)
-		touch(cmd+6);
-	else if(memcmp(cmd, "rm", 2)==0)
-		rm(cmd+3);
-	else if(memcmp(cmd, "editor", 6)==0)
-		editor(cmd+7);
-
-	else {
-		printString(cmd);
-		printString(" is not found!");
-	}
+static void clearCommand(const char * arg) {
+	clear();
 }
 
-void clear(void) {
-	VideoCharacter * videoMemory = (VideoCharacter *)VIDEO_MEMORY_ADDR;
-	for(int i=0; i<ONE_LINE_SIZE*LINE_COUNT/sizeof(VideoCharacter); i++) {
-		videoMemory->character = 0;
-		videoMemory->attribute = 0x07;
-		videoMemory++;
-	}
-	cursorInit();
-}
-
-void help(void) {
-	for(int i=0; i<sizeof(command)/sizeof(char*); i++)
-		puts(command[i]);
-}
-
-void memUsed(void) { // 램 사용량
+static void memUsed(const char * arg) { // 램 사용량
 	printMemoryRate();
 }
 
-
-void reboot(void) {
+static void reboot(const char * arg) {
 	setPort(0x64, 0xD1);
 	setPort(0x60, 0x00);
+}
+
+static void printDiskCapacity(const char * arg) {
+	printString("Disk Capacity: ");
+	printInt(getTotalSector()/2/1024, 10);
+	printString("MB");
+}
+
+static void multiTasking(const char * arg) {
+	processTest();
+}
+
+static void mountCommand(const char * arg) {
+	if(mount())
+		puts("success Mount!");
+}
+
+static void formatting(const char * arg) {
+	if(format())
+		puts("success disk format!");
+}
+
+static void ls(const char * arg) {
+	showDir();
+}
+
+static void touch(const char * arg) {
+	createFile(arg);
+}
+
+static void rm(const char * arg) {
+	deleteFile(arg);
+}
+
+static void editor(const char * arg) {
+	saveVideoMemory();
+	runEditor(arg);
+	loadVideoMemory();
 }
 
 static const char * bannerData[] = {
@@ -144,7 +183,7 @@ static const char * bannerData[] = {
 		"GRGREGBYFGL;;SDIFDK SKHU ZZANGZZANG @($*#$)@0#';[.'$2849DKFKDLS;;FDLFLDDFGJGGD"
 };
 
-void bannerProcess(QWORD line) {
+static void bannerProcess(QWORD line) {
 	const char * data = bannerData[line];
 	for(int i=0; data[i]!=NULL && i<=80; i++) {
 		int cnt=0;
@@ -155,57 +194,9 @@ void bannerProcess(QWORD line) {
 	exitProcess();
 }
 
-void processTest(void) {
+static void processTest(void) {
 	clear();
 	for(int i=0; i<sizeof(bannerData)/sizeof(char*); i++)
 		createProcess((QWORD)bannerProcess, i);
 	cursorLine(24);
-}
-
-void ReadSector(void) {
-	char buffer[512] = {0};
-	int a = readSector(TRUE, TRUE, 1, 1, buffer);
-	for(int i=0; i<512; i++)
-		printInt(buffer[i], 10);
-}
-
-void WriteSector(void) {
-	char buffer[512] = {0};
-	for(int i=0; i<512; i++)
-			buffer[i] = 'F';
-	writeSector(TRUE, TRUE, 1, 1, buffer);
-}
-
-void printDiskCapacity(void) {
-	printString("Disk Capacity: ");
-	printInt(getTotalSector()/2/1024, 10);
-	printString("MB");
-}
-
-void mountExecute(void) {
-	if(mount())
-		puts("success Mount!");
-}
-
-void formatting(void) {
-	if(format())
-		puts("success disk format!");
-}
-
-void ls(void) {
-	showDir();
-}
-
-void touch(const char * name) {
-	createFile(name);
-}
-
-void rm(const char * name) {
-	deleteFile(name);
-}
-
-void editor(const char * name) {
-	saveVideoMemory();
-	runEditor(name);
-	loadVideoMemory();
 }

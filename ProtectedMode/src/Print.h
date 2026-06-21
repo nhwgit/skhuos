@@ -19,7 +19,6 @@ void viewCharacter(BYTE ch);
 void moveToNextLine(void);
 void printString(const char* str);
 void puts(const char* str);
-void printInt(int num);
 int printStateAndReturn(bool state);
 
 #endif

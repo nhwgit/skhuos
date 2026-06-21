@@ -2,10 +2,9 @@
 #include "Memory.h"
 #include "util.h"
 
-static int currentPoint=0xB8460;
-static int alphabetDigit[10] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
-char * okSign = "OK";
-char * failSign = "Fail";
+static int currentPoint = VIDEO_MEMORY_ADDR + ONE_LINE_SIZE*7; // 부팅 메시지 다음 줄
+static const char * okSign = "OK";
+static const char * failSign = "Fail";
 
 void moveToNextLine(void) {
 	int xIdx = (currentPoint-VIDEO_MEMORY_ADDR) % ONE_LINE_SIZE;
@@ -64,30 +63,22 @@ void printStringLine(const char* str, int line) {
 
 void printInt(int num, int radix) {
 	char charNum[32] = {0};
-	int convertConstant = '1'-1;
 	int count = 0;
 	if(num==0) {
 		viewCharacter('0');
 		return;
 	}
-	for(int i=0; i<32; i++)
-		charNum[i]=-1;
+	if(num<0) {
+		viewCharacter('-');
+		num = -num;
+	}
 	while(num>0) {
-		int digit = num%radix;
-		if(digit<10)
-			charNum[count] = digit+convertConstant;
-		else
-			charNum[count] = alphabetDigit[digit%10];
+		charNum[count++] = "0123456789ABCDEF"[num%radix];
 		num /= radix;
-		count++;
 	}
 	reverseArray(charNum, count);
-	for(int i=0; i<32; i++) {
-		if(charNum[i]!=-1)
-			viewCharacter(charNum[i]);
-		else
-			break;
-	}
+	for(int i=0; i<count; i++)
+		viewCharacter(charNum[i]);
 }
 
 int printStateAndReturn(bool state) {
@@ -108,6 +99,16 @@ void fillLastLineBlank(void) {
 
 void cursorInit(void) {
 	currentPoint=VIDEO_MEMORY_ADDR;
+}
+
+void clear(void) {
+	VideoCharacter * videoMemory = (VideoCharacter *)VIDEO_MEMORY_ADDR;
+	for(int i=0; i<ONE_LINE_SIZE*LINE_COUNT/sizeof(VideoCharacter); i++) {
+		videoMemory->character = 0;
+		videoMemory->attribute = 0x07;
+		videoMemory++;
+	}
+	cursorInit();
 }
 
 void cursorLine(int line) {

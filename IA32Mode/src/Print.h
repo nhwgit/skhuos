@@ -29,6 +29,7 @@ int printStateAndReturn(bool state);
 void fillLastLineBlank(void);
 void cursorInit(void);
 void cursorLine(int line);
+void clear(void);
 void saveVideoMemory(void);
 void loadVideoMemory(void);
 
