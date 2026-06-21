@@ -7,6 +7,9 @@ static Mutex diskMutex = {0,};
 static DiskInformation disk = {0,};
 static bool isPrimaryInterruptOccur = FALSE;
 static bool isSecondaryInterruptOccur = FALSE;
+#define WAIT_LIMIT 2100000000 // 상태 폴링 최대 반복 횟수
+
+// [0]=SECONDARY, [1]=PRIMARY (bool 인덱스와 일치)
 static WORD portAddress[2][11] = {{SECONDARY_DATA, SECONDARY_ERROR, SECONDARY_SECTOR_COUNT, SECONDARY_SECTOR_NUMBER, SECONDARY_SYNLINDER_LSB,
 		   SECONDARY_SYNLINDER_MSB, SECONDARY_DRIVE_AND_HEADER, SECONDARY_STATUS, SECONDARY_COMMAND,
 		   SECONDARY_DIGITAL_OUTPUT, SECONDARY_DRIVE_ADDRESS},
@@ -30,13 +33,13 @@ void setDiskInterruptFlag(bool isPrimary, bool isSecondary) {
 
 bool waitInterrupt(bool isPrimary) {
 	if(isPrimary) {
-		for(int i=0; i<2100000000; i++) {
+		for(int i=0; i<WAIT_LIMIT; i++) {
 			if(isPrimaryInterruptOccur)
 				return TRUE;
 		}
 	}
 	else {
-		for(int i=0; i<2100000000; i++) {
+		for(int i=0; i<WAIT_LIMIT; i++) {
 			if(isSecondaryInterruptOccur)
 				return TRUE;
 		}
@@ -45,7 +48,7 @@ bool waitInterrupt(bool isPrimary) {
 }
 
 bool waitNoBusy(bool isPrimary) {
-	for(int i=0; i<2100000000; i++) {
+	for(int i=0; i<WAIT_LIMIT; i++) {
 		if((getPort(portAddress[isPrimary][STATUS])&STATUS_BSY)!=STATUS_BSY)
 			return TRUE;
 	}
@@ -53,23 +56,36 @@ bool waitNoBusy(bool isPrimary) {
 }
 
 bool waitReady(bool isPrimary) {
-	for(int i=0; i<2100000000; i++) {
+	for(int i=0; i<WAIT_LIMIT; i++) {
 		if((getPort(portAddress[isPrimary][STATUS])&STATUS_DRDY)==STATUS_DRDY)
 			return TRUE;
 	}
 	return FALSE;
 }
 
+static BYTE driveFlag(bool isMaster) {
+	if(isMaster)
+		return DRIVERHEAD_LBA | DRIVERHEAD_MASTER;
+	return DRIVERHEAD_LBA | DRIVERHEAD_SLAVE;
+}
+
+static void sendDiskCommand(bool isPrimary, bool isMaster, char sectorCount, int LBA, BYTE command) {
+	setPort(portAddress[isPrimary][SECTOR_COUNT], (int)sectorCount);
+	setPort(portAddress[isPrimary][SECTOR_NUMBER], LBA);
+	setPort(portAddress[isPrimary][SYNLINDER_LSB], LBA >> 8);
+	setPort(portAddress[isPrimary][SYNLINDER_MSB], LBA >> 16);
+	setPort(portAddress[isPrimary][DRIVE_AND_HEADER], (driveFlag(isMaster) & 0xF0) | (LBA >> 24)&0x0F);
+
+	while(!waitReady(isPrimary));
+	setDiskInterruptFlag(isPrimary, !isPrimary);
+	setPort(portAddress[isPrimary][COMMAND], command);
+}
+
 bool readInformation(bool isPrimary, bool isMaster) {
 	acquireLock(&diskMutex);
 	while(!waitNoBusy(isPrimary));
-	BYTE flag = 0;
-	if(isMaster)
-		flag = DRIVERHEAD_LBA | DRIVERHEAD_MASTER;
-	else
-		flag = DRIVERHEAD_LBA | DRIVERHEAD_SLAVE;
 
-	setPort(portAddress[isPrimary][DRIVE_AND_HEADER], flag);
+	setPort(portAddress[isPrimary][DRIVE_AND_HEADER], driveFlag(isMaster));
 
 	while(!waitReady(isPrimary));
 
@@ -94,33 +110,21 @@ bool readInformation(bool isPrimary, bool isMaster) {
 
 int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer) {
 	acquireLock(&diskMutex);
-	BYTE flag = 0;
-	if(isMaster)
-		flag = DRIVERHEAD_LBA | DRIVERHEAD_MASTER;
-	else
-		flag = DRIVERHEAD_LBA | DRIVERHEAD_SLAVE;
-
-	setPort(portAddress[isPrimary][SECTOR_COUNT], (int)sectorCount);
-	setPort(portAddress[isPrimary][SECTOR_NUMBER], LBA);
-	setPort(portAddress[isPrimary][SYNLINDER_LSB], LBA >> 8);
-	setPort(portAddress[isPrimary][SYNLINDER_MSB], LBA >> 16);
-	setPort(portAddress[isPrimary][DRIVE_AND_HEADER], (flag & 0xF0) | (LBA >> 24)&0x0F);
-
-	while(!waitReady(isPrimary));
-	setDiskInterruptFlag(isPrimary, !isPrimary);
-	setPort(portAddress[isPrimary][COMMAND], COMMAND_READ);
+	sendDiskCommand(isPrimary, isMaster, sectorCount, LBA, COMMAND_READ);
 
 	for(int i=0; i<sectorCount; i++) {
 		char status = 0;
-		status = getPort(portAddress[isPrimary][STATUS]);
-		if((status&STATUS_ERR)==STATUS_ERR) {
-			releaseLock(&diskMutex);
-			return i;
-		}
-		if((status&STATUS_DRQ)==STATUS_DRQ) {
-			for(int j = 0; j<256; j++) {
-				((WORD*)buffer)[i*256+j] = getPortWord(portAddress[isPrimary][DATA]);
+		while(1) { // 섹터 준비(DRQ) 대기
+			status = getPort(portAddress[isPrimary][STATUS]);
+			if((status&STATUS_ERR)==STATUS_ERR) {
+				releaseLock(&diskMutex);
+				return i;
 			}
+			if((status&STATUS_DRQ)==STATUS_DRQ)
+				break;
+		}
+		for(int j = 0; j<256; j++) {
+			((WORD*)buffer)[i*256+j] = getPortWord(portAddress[isPrimary][DATA]);
 		}
 	}
 	releaseLock(&diskMutex);
@@ -129,21 +133,7 @@ int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * 
 
 int writeSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer) {
 	acquireLock(&diskMutex);
-	BYTE flag = 0;
-	if(isMaster)
-		flag = DRIVERHEAD_LBA | DRIVERHEAD_MASTER;
-	else
-		flag = DRIVERHEAD_LBA | DRIVERHEAD_SLAVE;
-
-	setPort(portAddress[isPrimary][SECTOR_COUNT], (int)sectorCount);
-	setPort(portAddress[isPrimary][SECTOR_NUMBER], LBA);
-	setPort(portAddress[isPrimary][SYNLINDER_LSB], LBA >> 8);
-	setPort(portAddress[isPrimary][SYNLINDER_MSB], LBA >> 16);
-	setPort(portAddress[isPrimary][DRIVE_AND_HEADER], (flag & 0xF0) | (LBA >> 24)&0x0F);
-
-	while(!waitReady(isPrimary));
-	setDiskInterruptFlag(isPrimary, !isPrimary);
-	setPort(portAddress[isPrimary][COMMAND], COMMAND_WRITE);
+	sendDiskCommand(isPrimary, isMaster, sectorCount, LBA, COMMAND_WRITE);
 
 	char status = 0;
 	while(1) {
