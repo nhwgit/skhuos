@@ -82,7 +82,7 @@ bool format(void) {
 	return TRUE;
 }
 
-int findFreeClusterAndUpdate(void) {
+static int findFreeClusterAndUpdate(void) {
 	int loopCount = fatInfor.clusterLinkSectorCount;
 	for(int i=0; i<loopCount; i++) {
 		int offset = bestIdx / (SECTOR_SIZE/LINK_SIZE);
@@ -96,7 +96,7 @@ int findFreeClusterAndUpdate(void) {
 	return -1;
 }
 
-int findFreeDirectoreyEntryAndUpdate(void) {
+static int findFreeDirectoreyEntryAndUpdate(void) {
 	readCluster(0, buffer4096);
 	FileInformation * fileInfo = (FileInformation *)buffer4096;
 	for(int i=0; i<MAX_FILECOUNT; i++) {
@@ -106,18 +106,18 @@ int findFreeDirectoreyEntryAndUpdate(void) {
 	}
 	return -1;
 }
-void setClusterLinkTable(int idx, int data) {
+static void setClusterLinkTable(int idx, int data) {
 	int offset = idx / (SECTOR_SIZE/LINK_SIZE);
 	readSector(TRUE, TRUE, 1, fatInfor.clusterLinkSectorAddress+offset, buffer512);
 	(((DWORD*)buffer512)[idx % (SECTOR_SIZE/LINK_SIZE)]) = data;
 	writeSector(TRUE, TRUE, 1, fatInfor.clusterLinkSectorAddress+offset, buffer512);
 }
 
-void readCluster(int offset, const BYTE* buffer) {
+static void readCluster(int offset, BYTE* buffer) {
 	readSector(TRUE, TRUE, CLUSTER_SIZE/SECTOR_SIZE, fatInfor.dataAddress+(offset*(CLUSTER_SIZE/SECTOR_SIZE)), buffer);
 }
 
-void writeCluster(int offset, BYTE* buffer) {
+static void writeCluster(int offset, BYTE* buffer) {
 	writeSector(TRUE, TRUE, CLUSTER_SIZE/SECTOR_SIZE, fatInfor.dataAddress+(offset*(CLUSTER_SIZE/SECTOR_SIZE)), buffer);
 }
 
@@ -164,6 +164,42 @@ void deleteFile(const char * fileName) {
 }
 
 
+
+int readFile(const char * fileName, BYTE * buffer) { // 성공하면 파일 크기 반환
+	if(!isMounted) {
+		puts(notMountedMessage);
+		return -1;
+	}
+	readCluster(0, buffer4096);
+	FileInformation * fileInfo = (FileInformation *)buffer4096;
+	for(int i=0; i<MAX_FILECOUNT; i++) {
+		if(fileInfo[i].clusterIdx!=0 && strcmp(fileInfo[i].fileName, fileName)==0) {
+			readCluster(fileInfo[i].clusterIdx, buffer);
+			return fileInfo[i].fileSize;
+		}
+	}
+	puts(notFoundFileMessage);
+	return -1;
+}
+
+bool writeFile(const char * fileName, const BYTE * buffer, int size) {
+	if(!isMounted) {
+		puts(notMountedMessage);
+		return FALSE;
+	}
+	readCluster(0, buffer4096);
+	FileInformation * fileInfo = (FileInformation *)buffer4096;
+	for(int i=0; i<MAX_FILECOUNT; i++) {
+		if(fileInfo[i].clusterIdx!=0 && strcmp(fileInfo[i].fileName, fileName)==0) {
+			writeCluster(fileInfo[i].clusterIdx, (BYTE *)buffer);
+			fileInfo[i].fileSize = size;
+			writeCluster(0, buffer4096);
+			return TRUE;
+		}
+	}
+	puts(notFoundFileMessage);
+	return FALSE;
+}
 
 void showDir(void) {
 	if(!isMounted) {

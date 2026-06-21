@@ -8,11 +8,10 @@
 #include "Memory.h"
 
 static WORD pidCountIdx = 0;
-static ProcessScheduler scheduler = {0};
-static allocProcessTable[PROCESS_MAXCOUNT] = {0};
+static ProcessScheduler scheduler = {0}; // 타이머 ISR와 공유, setIf로 보호(단일 코어)
+static int allocProcessTable[PROCESS_MAXCOUNT] = {0};
 static Queue exitProcessQueue = {0};
-static QWORD queueBuffer[100]; // pid 담는다.
-static Mutex processListMutex = {0};
+static int queueBuffer[EXIT_QUEUE_COUNT]; // pid 담는다.
 
 void testCode(void) {
 	int i=0;
@@ -58,7 +57,6 @@ void setUpProcess(PCB * pcb, const QWORD entryPoint, const QWORD * stackAddress,
 
 void initScheduler(void) {
 	pidCountIdx = 0;
-	initMutex(&processListMutex);
 	PCB * pcb = (PCB *)(PCB_POOL_ADDRESS+sizeof(PCB)*pidCountIdx);
 	pcb->link.id = pidCountIdx;
 	allocProcessTable[pidCountIdx++] = 1;
@@ -84,22 +82,18 @@ PCB * createProcess(QWORD entryPoint, QWORD arg) { // 페이징 설정 추가 �
 	curProcess->link.id = pidCountIdx;
 	setUpProcess(curProcess, entryPoint, stackAddress, 0x2000);
 	curProcess->context.reg[REG_RDI] = arg; // 진입 함수의 첫번째 인자
-	//acquireLock(&processListMutex);
 	insertList(&(scheduler.processList), curProcess);
 	PtEntry * page = (PtEntry *)PTABLE_BASE_ADDRESS;
 	page[KERNEL_SIZE+pidCountIdx*2].lower4Byte |= PAGE_LOWER4B_FLAGS_P;
 	allocProcessTable[pidCountIdx++] = 1;
 	setIf(preIf);
-	//releaseLock(&processListMutex);
 	return curProcess;
 }
 
 void schedule(void) {
-    //acquireLock(&processListMutex);
     bool preIf = setIf(FALSE); 
 
     if(scheduler.processList.count == 0) {
-	//releaseLock(&processListMutex);
         setIf(preIf);
         return;
     }
@@ -117,21 +111,16 @@ void schedule(void) {
 
 void timeoutSchedule(void) {
 	PCB * curProcess, *nextProcess;
-	//bool preIf = setIf(FALSE);
 	if(scheduler.processList.count==0)
 		return;
 	bool preIf = setIf(FALSE);
-	//acquireLock(&processListMutex);
 	nextProcess = (PCB *)HeadRemove(&(scheduler.processList));
-	//releaseLock(&processListMutex);
 	setIf(preIf);
 	char * ist = (char *)(IST_START_ADDRESS+IST_SIZE-sizeof(ProcessContext));
 	curProcess = scheduler.runningProcess;
 	memcpy(&(curProcess->context), ist, sizeof(ProcessContext));
-	//acquireLock(&processListMutex);
 	preIf = setIf(FALSE);
 	insertList(&(scheduler.processList), curProcess);
-	//releaseLock(&processListMutex);
 	setIf(preIf);
 	scheduler.runningProcess = nextProcess;
 	memcpy(ist, &(nextProcess->context), sizeof(ProcessContext));

@@ -1,13 +1,8 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
-#include "Print.h"
 
 #define MULTITASKING_TIME	500000
 
-typedef struct monitor {
-	VideoCharacter vc[4000];
-	int cp;
-}Monitor;
 void startShell(void);
 void executeCommand(const char * cmd);
 void printAccountName(const char * str);

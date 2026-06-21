@@ -100,13 +100,11 @@ static BYTE keyMappingTable[89][2] =
 
 static bool shiftOn;
 
-static Queue keyQueue = {0};
-static char queueBuffer[100];
-static Mutex keyQueueMutex = {0};
+static Queue keyQueue = {0}; // ISR와 공유, setIf로 보호(단일 코어)
+static char queueBuffer[QUEUE_COUNT];
 
 void initKeyboard(void) {
 	initQueue(&keyQueue, queueBuffer, QUEUE_COUNT, sizeof(char));
-	initMutex(&keyQueueMutex);
 	shiftOn = FALSE;
 }
 
@@ -131,19 +129,15 @@ void inputQueue(BYTE scanCode) {
 	BYTE ascii = scanToASCII(scanCode);
 	if(ascii!=0) {
 		bool preIf = setIf(FALSE);
-		//acquireLock(&keyQueueMutex);
 		enQueue(&keyQueue, &ascii);
 		setIf(preIf);
-		//releaseLock(&keyQueueMutex);
 	}
 }
 
 bool getQueue(char * data) {
 	bool preIf = setIf(FALSE);
-	//acquireLock(&keyQueueMutex);
 	bool success = deQueue(&keyQueue, data);
 	setIf(preIf);
-	//releaseLock(&keyQueueMutex);
 	return success;
 }
 

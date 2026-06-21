@@ -114,9 +114,27 @@ void cursorLine(int line) {
 	currentPoint=VIDEO_MEMORY_ADDR+ONE_LINE_SIZE*line;
 }
 
-void setCursorMemory(int mem) {
-	currentPoint = mem;
+typedef struct monitor { // 화면 전체와 커서 위치 백업
+	VideoCharacter vc[ONE_LINE_SIZE*LINE_COUNT/ONE_CHAR_SIZE];
+	int cp;
+}Monitor;
+
+static Monitor monitor = {0};
+
+void saveVideoMemory(void) {
+	VideoCharacter * videoMemory = (VideoCharacter *)VIDEO_MEMORY_ADDR;
+	monitor.cp = currentPoint;
+	for(int i=0; i<ONE_LINE_SIZE*LINE_COUNT/ONE_CHAR_SIZE; i++) {
+		monitor.vc[i].attribute=videoMemory[i].attribute;
+		monitor.vc[i].character=videoMemory[i].character;
+	}
 }
-int getCurrentPoint(void) {
-	return currentPoint;
+
+void loadVideoMemory(void) {
+	VideoCharacter * videoMemory = (VideoCharacter *)VIDEO_MEMORY_ADDR;
+	for(int i=0; i<ONE_LINE_SIZE*LINE_COUNT/ONE_CHAR_SIZE; i++) {
+		videoMemory[i].attribute = monitor.vc[i].attribute;
+		videoMemory[i].character = monitor.vc[i].character;
+	}
+	currentPoint = monitor.cp;
 }

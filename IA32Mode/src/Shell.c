@@ -1,4 +1,5 @@
 #include "Shell.h"
+#include "Print.h"
 #include "String.h"
 #include "portControl.h"
 #include "Process.h"
@@ -24,10 +25,6 @@ static char * command[] = {
 		"rm fileName",
 		"editor fileName"
 };
-
-static QWORD stack[300] = {0}; // 임시
-static PCB process[2] = {0};
-Monitor monitor = {0};
 
 void startShell(void) {
 	int bufferIndex = 0;
@@ -120,11 +117,6 @@ void reboot(void) {
 	setPort(0x60, 0x00);
 }
 
-/*void startProcess(void) { // 임시
-	setUpProcess(&(process[1]), (QWORD)testCode, (QWORD *)&stack, sizeof(stack));
-	switchContext(&(process[0].context), &(process[1].context));
-}*/
-
 static const char * bannerData[] = {
 		"        ZZZZZZZZZZZZZZ@&$*%)@_(%&#(!)*%(@)#!ZZZZZZZZZZZZRETWZZZ8",
 		"        ZyZZZZZZZZZZZZ ________*&$$     yDB9ZZZZZZZZZZZZZZRETFZjZ",
@@ -210,24 +202,6 @@ void touch(const char * name) {
 
 void rm(const char * name) {
 	deleteFile(name);
-}
-
-void saveVideoMemory(void) {
-	VideoCharacter * videoMemory = VIDEO_MEMORY_ADDR;
-	monitor.cp = getCurrentPoint();
-	for(int i=0; i<4000; i++) {
-		monitor.vc[i].attribute=videoMemory[i].attribute;
-		monitor.vc[i].character=videoMemory[i].character;
-	}
-}
-
-void loadVideoMemory(void) {
-	VideoCharacter * videoMemory = VIDEO_MEMORY_ADDR;
-	for(int i=0; i<4000; i++) {
-		videoMemory[i].attribute = monitor.vc[i].attribute;
-		videoMemory[i].character = monitor.vc[i].character;
-	}
-	setCursorMemory(monitor.cp);
 }
 
 void editor(const char * name) {

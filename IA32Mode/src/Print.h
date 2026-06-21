@@ -29,7 +29,7 @@ int printStateAndReturn(bool state);
 void fillLastLineBlank(void);
 void cursorInit(void);
 void cursorLine(int line);
-void setCursorMemory(int mem);
-int getCurrentPoint(void);
+void saveVideoMemory(void);
+void loadVideoMemory(void);
 
 #endif

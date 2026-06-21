@@ -41,13 +41,10 @@ typedef struct fileInformation {
 void initFAT(void);
 bool mount(void);
 bool format(void);
-int findFreeClusterAndUpdate(void);
-int findFreeDirectoreyEntryAndUpdate(void);
-void setClusterLinkTable(int idx, int data);
-void readCluster(int offset, const BYTE* buffer);
-void writeCluster(int offset, BYTE* buffer);
 void createFile(const char * fileName);
 void deleteFile(const char * fileName);
+int readFile(const char * fileName, BYTE * buffer);
+bool writeFile(const char * fileName, const BYTE * buffer, int size);
 void showDir(void);
 
 #endif
