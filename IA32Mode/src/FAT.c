@@ -10,6 +10,7 @@ static const char * mountFailMessage1 = "read disk fail.";
 static const char * mountFailMessage2 = "do formatting first.";
 static const char * notMountedMessage = "do mounting disk first.";
 static const char * notFoundFileMessage = "File was not found";
+static const char * alreadyExistMessage = "file already exists";
 
 static int bestIdx = 0; // 클러스터 인덱스
 static int bestRootDirIdx = 0;
@@ -22,11 +23,8 @@ void initFAT(void) {
 }
 
 bool mount(void) {
-	for(int i=0; i<SECTOR_SIZE; i++)
-		buffer512[i] = 0;
-
-	for(int i=0; i<CLUSTER_SIZE; i++)
-		buffer4096[i] = 0;
+	memsetZero(buffer512, sizeof(buffer512));
+	memsetZero(buffer4096, sizeof(buffer4096));
 
 	if(!readSector(TRUE, TRUE, 1, 0, buffer512)) {
 		puts(mountFailMessage1);
@@ -44,19 +42,12 @@ bool mount(void) {
 	fatInfor.freeClusterCount = boot->freeClusterCount;
 	bestIdx = 0;
 	bestRootDirIdx = 0;
-
-	//0번 클러스터 링크 테이블 사용중인것으로 변경
-	memsetZero(buffer512, sizeof(buffer512));
-	((DWORD*)buffer512)[0] = 0xFFFFFFFF;
-	writeSector(TRUE, TRUE, 1, 1, buffer512);
 	isMounted = TRUE;
 	return TRUE;
 }
 
 bool format(void) {
-	BYTE buffer1[sizeof(DiskInformation)] = {0};
-	DiskInformation * disk = (DiskInformation*)buffer1;
-	disk = getDiskInformation();
+	DiskInformation * disk = getDiskInformation();
 	int sectorCount = disk->totalSector;
 	int clusterCount = sectorCount / (CLUSTER_SIZE/SECTOR_SIZE);
 	int clusterLinkSectorCount = (clusterCount+(SECTOR_SIZE/LINK_SIZE)-1)/(SECTOR_SIZE/LINK_SIZE);
@@ -79,6 +70,8 @@ bool format(void) {
 	for(int i=1; i<sectorCount; i++) {
 		writeSector(TRUE, TRUE, 1, i, buffer512);
 	}
+	((DWORD*)buffer512)[0] = 0xFFFFFFFF; // 0번 클러스터(루트 디렉터리) 사용중 표시
+	writeSector(TRUE, TRUE, 1, 1, buffer512);
 	return TRUE;
 }
 
@@ -126,20 +119,31 @@ void createFile(const char * fileName) {
 		puts(notMountedMessage);
 		return ;
 	}
-	FileInformation fileInfo = {0,};
+	readCluster(0, buffer4096);
+	FileInformation * dir = (FileInformation *)buffer4096;
+	for(int i=0; i<MAX_FILECOUNT; i++) {
+		if(dir[i].clusterIdx!=0 && strcmp(dir[i].fileName, fileName)==0) {
+			puts(alreadyExistMessage);
+			return;
+		}
+	}
+	int dirEntry = findFreeDirectoreyEntryAndUpdate();
+	if(dirEntry == -1)
+		return;
 	int cluster = findFreeClusterAndUpdate();
 	if(cluster == -1)
 		return;
 	setClusterLinkTable(cluster, 0xFFFFFFFF);
-	int dirEntry = findFreeDirectoreyEntryAndUpdate();
-	if(dirEntry == -1)
-		return;
-	memcpy(fileInfo.fileName, fileName, MAX_FILENAME);
+
+	FileInformation fileInfo = {0,};
+	int nameLen = strlen(fileName);
+	if(nameLen > MAX_FILENAME-1)
+		nameLen = MAX_FILENAME-1;
+	memcpy(fileInfo.fileName, fileName, nameLen);
 	fileInfo.clusterIdx = cluster;
 	fileInfo.fileSize = 0; // 빈 파일 생성
 
 	readCluster(0, buffer4096);
-	FileInformation * tmp = (FileInformation*)buffer4096;
 	((FileInformation*)buffer4096)[dirEntry] = fileInfo;
 	writeCluster(0, buffer4096);
 }
