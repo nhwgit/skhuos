@@ -32,7 +32,7 @@ void garbegeProcessCollector(void) {
 		if(!queueIsEmpty(&exitProcessQueue)) {
 			deQueue(&exitProcessQueue, &pid);
 			removeList(&(scheduler.processList), pid);
-			PtEntry * page = (PtEntry *)PT_ENTRY_ADDRESS;
+			PtEntry * page = (PtEntry *)PTABLE_BASE_ADDRESS;
 			page[KERNEL_SIZE+pid*2].lower4Byte &= ~PAGE_LOWER4B_FLAGS_P;
 		}
 	}
@@ -86,7 +86,7 @@ PCB * createProcess(QWORD entryPoint, QWORD arg) { // 페이징 설정 추가 �
 	curProcess->context.reg[REG_RDI] = arg; // 진입 함수의 첫번째 인자
 	//acquireLock(&processListMutex);
 	insertList(&(scheduler.processList), curProcess);
-	PtEntry * page = (PtEntry *)PT_ENTRY_ADDRESS;
+	PtEntry * page = (PtEntry *)PTABLE_BASE_ADDRESS;
 	page[KERNEL_SIZE+pidCountIdx*2].lower4Byte |= PAGE_LOWER4B_FLAGS_P;
 	allocProcessTable[pidCountIdx++] = 1;
 	setIf(preIf);
