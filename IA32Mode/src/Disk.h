@@ -12,8 +12,8 @@
 #define PRIMARY_ERROR 0x1F1
 #define PRIMARY_SECTOR_COUNT 0x1F2
 #define PRIMARY_SECTOR_NUMBER 0x1F3
-#define PRIMARY_SYNLINDER_LSB 0x1F4
-#define PRIMARY_SYNLINDER_MSB 0x1F5
+#define PRIMARY_CYLINDER_LSB 0x1F4
+#define PRIMARY_CYLINDER_MSB 0x1F5
 #define PRIMARY_DRIVE_AND_HEADER 0x1F6
 #define PRIMARY_STATUS 0x1F7
 #define PRIMARY_COMMAND 0x1F7
@@ -24,8 +24,8 @@
 #define SECONDARY_ERROR 0x171
 #define SECONDARY_SECTOR_COUNT 0x172
 #define SECONDARY_SECTOR_NUMBER 0x173
-#define SECONDARY_SYNLINDER_LSB 0x174
-#define SECONDARY_SYNLINDER_MSB 0x175
+#define SECONDARY_CYLINDER_LSB 0x174
+#define SECONDARY_CYLINDER_MSB 0x175
 #define SECONDARY_DRIVE_AND_HEADER 0x176
 #define SECONDARY_STATUS 0x177
 #define SECONDARY_COMMAND 0x177
@@ -36,8 +36,8 @@
 #define ERROR 1
 #define SECTOR_COUNT 2
 #define SECTOR_NUMBER 3
-#define SYNLINDER_LSB 4
-#define SYNLINDER_MSB 5
+#define CYLINDER_LSB 4
+#define CYLINDER_MSB 5
 #define DRIVE_AND_HEADER 6
 #define STATUS 7
 #define COMMAND 8
@@ -74,7 +74,7 @@ typedef struct diskInformation {
 	WORD sectorPerCylinderCount;
 	WORD interSectorGap;
 	WORD bytesInPhaseLock;
-	WORD vendoeStatusWordCount;
+	WORD vendorStatusWordCount;
 	WORD serialNumber[10];
 	WORD controllerType;
 	WORD bufferSize;

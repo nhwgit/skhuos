@@ -18,6 +18,9 @@ static bool isMounted = FALSE;
 static BYTE buffer512[SECTOR_SIZE]= {0};
 static BYTE buffer4096[CLUSTER_SIZE] = {0};
 
+static void readCluster(int offset, BYTE* buffer);
+static void writeCluster(int offset, BYTE* buffer);
+
 void initFAT(void) {
 	isMounted = FALSE;
 }
@@ -89,7 +92,7 @@ static int findFreeClusterAndUpdate(void) {
 	return -1;
 }
 
-static int findFreeDirectoreyEntryAndUpdate(void) {
+static int findFreeDirectoryEntryAndUpdate(void) {
 	readCluster(0, buffer4096);
 	FileInformation * fileInfo = (FileInformation *)buffer4096;
 	for(int i=0; i<MAX_FILECOUNT; i++) {
@@ -127,7 +130,7 @@ void createFile(const char * fileName) {
 			return;
 		}
 	}
-	int dirEntry = findFreeDirectoreyEntryAndUpdate();
+	int dirEntry = findFreeDirectoryEntryAndUpdate();
 	if(dirEntry == -1)
 		return;
 	int cluster = findFreeClusterAndUpdate();

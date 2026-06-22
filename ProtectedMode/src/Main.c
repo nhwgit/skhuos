@@ -12,7 +12,7 @@ void Main(void) {
 	if(!InitializeMemory(PAGE_TABLE_START_ADDRESS, IA32_END_ADDRESS))
 		while(1);
 	printString(initializePageTableMessage);
-	InitializePageTable();
+	InitializePaging();
 	copyIA32ModeImage();
 	SwitchIA32Mode();
 }

@@ -81,13 +81,12 @@ typedef struct processScheduler {
 #pragma pack(pop)
 
 void setUpProcess(PCB * pcb, const QWORD entryPoint, const QWORD * stackAddress, const QWORD stackSize);
-void testCode(void);
 void initScheduler(void);
 PCB * createProcess(QWORD entry, QWORD arg);
 void schedule(void);
 void timeoutSchedule(void);
 void exitProcess(void);
-void garbegeProcessCollector(void);
+void garbageProcessCollector(void);
 int getRunningPid(void);
 
 #endif

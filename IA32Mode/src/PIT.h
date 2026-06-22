@@ -32,7 +32,7 @@
 void sleep(long us);
 int usToClock(QWORD us);
 int msToClock(QWORD ms);
-void initilizePIT(int clock, bool periodic);
+void initializePIT(int clock, bool periodic);
 WORD readCounter0(void);
 
 #endif

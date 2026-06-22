@@ -10,10 +10,10 @@
 #define MAX_CODE_SIZE 2 // 단위 : gb
 #define KERNEL_SIZE 32 // 단위 : mb
 
-void InitializePageTable(void);
+void InitializePaging(void);
 void InitializePML4Table(void);
 void InitializePageDirectoryPointerTable(void);
-void InitilizePageDirectoryTable(void);
-void InitilizePageTable(void);
+void InitializePageDirectoryTable(void);
+void InitializePageTable(void);
 
 #endif

@@ -22,13 +22,13 @@ static QWORD isrAddress[48] = {
 		(QWORD)IV42, (QWORD)IV43, (QWORD)IV44, // 42~44
 		(QWORD)IV45, (QWORD)IV46, (QWORD)IV47 // 45~47
 };
-void initilizeDiscriptor(void) {
+void initializeDescriptor(void) {
 	initializeGDTR();
 	initializeGDT();
-	initializeTSSDiscriptor();
+	initializeTSSDescriptor();
 	initializeTSS();
 	initializeIDTR();
-	initilizeIDT();
+	initializeIDT();
 }
 
 void initializeIDTR(void) {
@@ -40,7 +40,7 @@ void initializeIDTR(void) {
 	idtr->reserved2 = 0;
 }
 
-void initilizeIDT(void) {
+void initializeIDT(void) {
 	IDT * idt = (IDT *)IDT_ADDRESS;
 	for(int i=0; i<sizeof(isrAddress)/sizeof(QWORD); i++) {
 		idt[i].offset0To15 = isrAddress[i] & 0x0000FFFF;
@@ -84,7 +84,7 @@ void initializeGDT(void) {
 			GDT_TYPE_CODE  | (segmentSize & 0xF0000);
 }
 
-void initializeTSSDiscriptor(void) {
+void initializeTSSDescriptor(void) {
 	TSSDescriptor * tssDescriptor = (TSSDescriptor *)TSS_DESCRIPTOR_ADDRESS;
 	DWORD segmentSize = sizeof(TSS)-1;
 	tssDescriptor->first4Byte = ((segmentSize)&0xFFFF) | ((TSS_ADDRESS & 0x0000FFFF) << 16);

@@ -89,12 +89,12 @@ typedef struct idt {
 } IDT;
 #pragma pack(pop)
 
-void initilizeDiscriptor(void);
+void initializeDescriptor(void);
 void initializeGDTR(void);
 void initializeGDT(void);
-void initializeTSSDiscriptor(void);
+void initializeTSSDescriptor(void);
 void initializeTSS(void);
 void initializeIDTR(void);
-void initilizeIDT(void);
+void initializeIDT(void);
 
 #endif

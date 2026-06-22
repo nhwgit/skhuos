@@ -1,6 +1,5 @@
 #include "PIT.h"
 #include "portControl.h"
-#include "Print.h"
 
 int usToClock(QWORD us) {
 	return (FREQUENCY * us) / 1000000;
@@ -10,7 +9,7 @@ int msToClock(QWORD ms) {
 	return (FREQUENCY * ms) / 1000;
 }
 
-void initilizePIT(int clock, bool periodic) {
+void initializePIT(int clock, bool periodic) {
 	if(periodic)
 		setPort(CTRL_REG, PIT_BCD_FALSE | PIT_MODE_2 | PIT_RW_LOWERTOUPPER | PIT_CONTROL_COUNTER0 );
 	else
@@ -27,7 +26,7 @@ WORD readCounter0(void) {
 }
 
 void sleep(long us) {
-	initilizePIT(usToClock(0x0), TRUE);
+	initializePIT(usToClock(0x0), TRUE);
 	long remainingTime = us;
 	WORD time1 = readCounter0();
 	while(remainingTime>0) {

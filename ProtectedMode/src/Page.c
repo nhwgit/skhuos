@@ -1,11 +1,11 @@
 #include "Page.h"
 #include "Print.h"
 
-void InitializePageTable(void) {
+void InitializePaging(void) {
    InitializePML4Table();
    InitializePageDirectoryPointerTable();
-   InitilizePageDirectoryTable();
-   InitilizePageTable();
+   InitializePageDirectoryTable();
+   InitializePageTable();
 }
 
 void InitializePML4Table(void) {
@@ -33,7 +33,7 @@ void InitializePageDirectoryPointerTable(void) { //단위 : gb
 	}
 }
 
-void InitilizePageDirectoryTable(void) {
+void InitializePageDirectoryTable(void) {
 	PdEntry * pdEntry = (PdEntry *)PDTABLE_BASE_ADDRESS;
 	for(int i=0; i<MAX_MEMORY_SIZE*TABLE_COUNT; i++) {
 		int pageTableAddress = PTABLE_BASE_ADDRESS + (i*PAGE_TABLE_SIZE);
@@ -44,7 +44,7 @@ void InitilizePageDirectoryTable(void) {
 
 }
 
-void InitilizePageTable(void) { // 커널영역 이후 기본적으로 활성화 안돼있다.
+void InitializePageTable(void) { // 커널영역 이후 기본적으로 활성화 안돼있다.
 	PtEntry * ptEntry = (PtEntry *)PTABLE_BASE_ADDRESS;
 	for(int i=0; i<KERNEL_SIZE*512; i++) {
 		int physicalAddress = i*0x1000;
@@ -67,7 +67,7 @@ void InitilizePageTable(void) { // 커널영역 이후 기본적으로 활성화
 	}
 }
 
-/*void InitilizePageDirectoryTable(void) {
+/*void InitializePageDirectoryTable(void) {
 	PdEntry * pdEntry = (PdEntry *)PDTABLE_BASE_ADDRESS;
 	for(int i=0; i < TABLE_COUNT*MAX_MEMORY_SIZE; i++) {
 		int physicalAddress = i*0x200000;

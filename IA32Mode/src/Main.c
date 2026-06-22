@@ -17,25 +17,25 @@ void Main(void) {
 	puts("Switch to IA-32e mode");
 	puts("Success Booting");
 
-	initilizeDiscriptor();
-	puts("Initilize Discriptor");
+	initializeDescriptor();
+	puts("Initialize Descriptor");
 
 	loadGDTR(GDTR_ADDRESS);
 	loadTR(TSS_DESCRIPTOR_OFFSET);
 	loadIDTR(IDTR_ADDRESS);
-	puts("Discriptor Load Complete");
+	puts("Descriptor Load Complete");
 
 	initializePIC();
 	setIMR(0);
 	enableInterrupt();
-	puts("PIC initilize");
+	puts("PIC initialize");
 	initKeyboard();
 	initMemoryBitmap();
-	puts("Memory Pool Initilize");
+	puts("Memory Pool Initialize");
 	initScheduler();
-	initilizePIT(msToClock(SLOT_TIME), 1);
+	initializePIT(msToClock(SLOT_TIME), 1);
 	initDisk();
-	puts("Disk Initilize");
+	puts("Disk Initialize");
 	initFAT();
 	startShell();
 	while(1);

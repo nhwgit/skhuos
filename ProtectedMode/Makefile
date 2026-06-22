@@ -16,9 +16,9 @@ $(OBJECTDIRECTORY)/Entry.bin: $(SOURCEDIRECTORY)/Entry.s
 	$(NASM32) -o $@ $<
 
 dep:
-	@echo Make Dependancy File
+	@echo Make Dependency File
 	make -C $(OBJECTDIRECTORY) -f ../makefile InternalDependency
-	@echo Dependancy Search Complete
+	@echo Dependency Search Complete
 
 ExecuteInternalBuild: dep
 	make -C $(OBJECTDIRECTORY) -f ../makefile Kernel32.elf

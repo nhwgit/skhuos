@@ -13,12 +13,6 @@ static int allocProcessTable[PROCESS_MAXCOUNT] = {0};
 static Queue exitProcessQueue = {0};
 static int queueBuffer[EXIT_QUEUE_COUNT]; // pid 담는다.
 
-void testCode(void) {
-	int i=0;
-	puts("Process execute");
-	while(1);
-}
-
 void exitProcess(void) {
 	bool preIf = setIf(FALSE);
 	enQueue(&exitProcessQueue, &scheduler.runningProcess->link.id);
@@ -27,7 +21,7 @@ void exitProcess(void) {
 	while(1);
 }
 
-void garbegeProcessCollector(void) {
+void garbageProcessCollector(void) {
 	int pid;
 	while(1) {
 		if(!queueIsEmpty(&exitProcessQueue)) {
@@ -43,8 +37,6 @@ void garbegeProcessCollector(void) {
 }
 
 void setUpProcess(PCB * pcb, const QWORD entryPoint, const QWORD * stackAddress, const QWORD stackSize) {
-	//pcb->pid = (pidCount++)%PROCESS_MAXCOUNT;
-	//pcb->pid = pid;
 	pcb->stackAddress = stackAddress;
 	pcb->stackSize = stackSize;
 	InitializeMemory(pcb->context.reg, sizeof(pcb->context.reg));
@@ -68,7 +60,7 @@ void initScheduler(void) {
 	initList(&(scheduler.processList));
 	scheduler.runningProcess = pcb;
 	initQueue(&exitProcessQueue, queueBuffer, EXIT_QUEUE_COUNT, sizeof(int)); // link.id 크기와 일치
-	createProcess((QWORD)garbegeProcessCollector, 0);
+	createProcess((QWORD)garbageProcessCollector, 0);
 }
 
 PCB * createProcess(QWORD entryPoint, QWORD arg) { // 페이징 설정 추가 필요]

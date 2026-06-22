@@ -11,7 +11,7 @@
 #define IRQ_PRINT1		7
 
 #define IRQ_RTC			8
-#define IRQ_REVERSED	9
+#define IRQ_RESERVED	9
 #define IRQ_MOUSE		12
 #define IRQ_COPROCESSOR	13
 #define IRQ_DISK1		14
