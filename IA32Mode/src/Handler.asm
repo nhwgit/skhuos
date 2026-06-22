@@ -1,7 +1,7 @@
 [BITS 64]
 SEGMENT .text
 
-extern testHandler, keyboardHandler, interruptHandler, timerHandler, disk1Handler, disk2Handler
+extern testHandler, keyboardHandler, timerHandler, disk1Handler, disk2Handler
 
 %macro SAVEREG 0
     push r15

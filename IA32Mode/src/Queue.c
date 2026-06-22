@@ -1,6 +1,5 @@
 #include "Queue.h"
 #include "Memory.h"
-#include "Print.h"
 
 void initQueue(Queue * queue, void* queueBuffer, int queueLen, int size) {
 	queue->front = 0;

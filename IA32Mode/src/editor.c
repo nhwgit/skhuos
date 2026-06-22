@@ -21,6 +21,8 @@ void runEditor(const char * name) {
 		if(getQueue(&data)) {
 			if(data==KEY_ENTER) {
 				int strIdxNew = strIdx - strIdx%80 + 80; // 다음 80배수까지 공백 채움
+				if(strIdxNew > sizeof(buffer)-1)
+					continue;
 				while(strIdx < strIdxNew)
 					buffer[strIdx++] = ' ';
 				buffer[strIdx] = '\0';
@@ -56,7 +58,7 @@ void runEditor(const char * name) {
 								viewCharacterXY('\0', 24, stateIdx);
 							}
 						}
-						else if(data!=0) {
+						else if(data!=0 && stateIdx < sizeof(stateBuffer)-1) {
 							viewCharacterXY(data, 24, stateIdx);
 							stateBuffer[stateIdx++] = data;
 							stateBuffer[stateIdx] = '\0';
@@ -65,6 +67,8 @@ void runEditor(const char * name) {
 				}
 			}
 			else if(data!=0) {
+				if(strIdx >= sizeof(buffer)-1)
+					continue;
 				buffer[strIdx++] = data;
 				buffer[strIdx] = '\0';
 			}

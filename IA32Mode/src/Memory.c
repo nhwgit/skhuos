@@ -8,8 +8,8 @@ static char memory[0x3][0x200][0x20];
 
 static int totalMemory;
 
-const char * totalMemSizeMessage = "total memory size: ";
-const char * usingMemoryRateMessage = "using : ";
+static const char * totalMemSizeMessage = "total memory size: ";
+static const char * usingMemoryRateMessage = "using : ";
 
 void initMemoryBitmap(void) {
 	for(int pdt=0; pdt<TOTAL_MEMORY / 0x20000; pdt++) {
@@ -26,23 +26,6 @@ void initMemoryBitmap(void) {
 	bestIdx = 0x400;
 	usingMemory = 0x4000;
 }
-
-/*int AllocMemory(void) { // kb 단위
-	int pdt=0, pt=0, pm=0;
-	pdt = bestIdx % 0x100;
-	pt = (bestIdx % 0x20000) / 0x100;
-	pm = bestIdx / 0x20000;
-	for(int i=pdt; i<0x3; i++) {
-		for(int j=pt; j<0x200; j++) {
-			for(int k=pm; k<0x20; k++) {
-				for(int bitOffset = 0; bitOffset<8; i++){
-					if((memory[i][j][k] << (7-i)) & 1 == 0)
-
-				}
-			}
-		}
-	}
-}*/
 
 void printMemoryRate(void) {
 	int totalMemory = TOTAL_MEMORY / 0x20000;

@@ -9,17 +9,14 @@ void initList(LinkedList * list) {
 }
 
 void insertList(LinkedList * list, void * item) {
-	//Node * cur = (Node *)item;
-	//cur->next = NULL;
-	(list->count)++;
-	if(list->head==NULL) {
+	Node * node = (Node *)item;
+	node->next = NULL;
+	if(list->head==NULL)
 		list->head = item;
-		list->tail = item;
-	}
-	Node * cur = (Node *)list->tail;
-	cur->next=item;
+	else
+		((Node *)(list->tail))->next = item;
 	list->tail = item;
-	((Node *)(list->tail))->next = NULL;
+	(list->count)++;
 }
 
 void printList(LinkedList * list) {

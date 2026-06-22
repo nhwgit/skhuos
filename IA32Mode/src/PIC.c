@@ -1,6 +1,5 @@
 #include "portControl.h"
 #include "PIC.h"
-#include "Print.h"
 
 static int state = INITIAL;
 void initializePIC(void) {

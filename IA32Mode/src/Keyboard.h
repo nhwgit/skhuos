@@ -60,10 +60,6 @@
 
 #define QUEUE_COUNT		50
 
-typedef struct key {
-	BYTE code;
-	BYTE bombinedCode;
-} KEY;
 int isOutputBufferFull(void);
 int isInputBufferFull(void);
 //bool changeLED(bool capsLock, bool numLock, bool scrollLock);
