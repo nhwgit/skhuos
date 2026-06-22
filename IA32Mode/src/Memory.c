@@ -39,27 +39,6 @@ void printMemoryRate(void) {
 	printString("%");
 }
 
-void memcpy(void * dest, const void * src, int size) {
-	for(int i=0; i<size; i++)
-		((BYTE*)dest)[i] = ((BYTE*)src)[i];
-}
-
-int memcmp(const void * mem1, const void * mem2, int size) {
-	BYTE tmp;
-	for(int i=0; i<size; i++) {
-		tmp = ((BYTE*)mem1)[i]-((BYTE*)mem2)[i];
-		if(tmp!=0)
-			return tmp;
-	}
-	return 0;
-}
-
-void memsetZero(void * mem, int size) {
-	for(int i=0; i<size; i++) {
-		((BYTE*)mem)[i] = 0;
-	}
-}
-
 void memorySizeCheck(void) {
 	DWORD * currentAddress = (DWORD *)0x4000000;
 	DWORD previousValue = *currentAddress;

@@ -6,6 +6,7 @@
 #include "ContextSwitching.h"
 #include "Queue.h"
 #include "Memory.h"
+#include "String.h"
 
 static WORD pidCountIdx = 0;
 static ProcessScheduler scheduler = {0}; // 타이머 ISR와 공유, setIf로 보호(단일 코어)

@@ -31,7 +31,7 @@ clean:
 ENTRYPOINTSOURCEFILE = ../$(SOURCEDIRECTORY)/Entry.s
 ENTRYPOINTOBJECTFILE = Entry.o
 
-CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
+CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c) $(wildcard ../../common/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
 COBJECTFILES = $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES)))
 ASSEMBLYOBJECTFILES = $(notdir $(patsubst %.asm,%.o,$(ASSEMBLYSOURCEFILES)))
@@ -40,6 +40,9 @@ $(ENTRYPOINTOBJECTFILE): $(ENTRYPOINTSOURCEFILE)
 	$(NASM64) -o $@ $<
 
 %.o: ../$(SOURCEDIRECTORY)/%.c
+	$(GCC64) -c $<
+
+%.o: ../../common/%.c
 	$(GCC64) -c $<
 
 %.o: ../$(SOURCEDIRECTORY)/%.asm

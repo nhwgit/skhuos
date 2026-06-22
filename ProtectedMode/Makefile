@@ -34,12 +34,15 @@ clean:
 	rm -f $(OBJECTDIRECTORY)/*.*
 
 CENTRYPOINTOBJECTFILE = Main.o
-CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
+CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c) $(wildcard ../../common/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
 COBJECTFILES = $(subst Main.o, , $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES))))
 ASSEMBLYOBJECTFILES = $(notdir $(patsubst %.asm,%.o,$(ASSEMBLYSOURCEFILES)))
 
 %.o: ../$(SOURCEDIRECTORY)/%.c
+	$(GCC32) -c $<
+
+%.o: ../../common/%.c
 	$(GCC32) -c $<
 
 %.o: ../$(SOURCEDIRECTORY)/%.asm

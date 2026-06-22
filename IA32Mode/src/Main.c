@@ -14,6 +14,7 @@
 #include "Shell.h"
 
 void Main(void) {
+	cursorLine(7); // 부팅 메시지 다음 줄부터 출력
 	puts("Switch to IA-32e mode");
 	puts("Success Booting");
 

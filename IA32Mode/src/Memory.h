@@ -8,9 +8,6 @@
 
 void initMemoryBitmap(void);
 void printMemoryRate(void);
-void memcpy(void * dest, const void * src, int size);
-int memcmp(const void * mem1, const void * mem2, int size);
-void memsetZero(void * mem, int size);
 void memorySizeCheck(void);
 int getTotalMemory(void);
 #endif

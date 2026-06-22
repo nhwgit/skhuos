@@ -8,6 +8,7 @@ const char * initializeKernelMessage = "Page table & Kernel area initialize...";
 const char * initializePageTableMessage = "page table initialize";
 
 void Main(void) {
+	cursorLine(5); // 부팅 메시지 다음 줄부터 출력
 	printString(initializeKernelMessage);
 	if(!InitializeMemory(PAGE_TABLE_START_ADDRESS, IA32_END_ADDRESS))
 		while(1);
