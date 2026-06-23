@@ -27,6 +27,7 @@ Util:
 Disk.img: $(BASEDIRECTORY)/BootLoader/BootLoader.bin $(BASEDIRECTORY)/ProtectedMode/ProtectedMode.bin $(BASEDIRECTORY)/IA32Mode/IA32Mode.bin | Util
 	@echo Disk Image Build Start
 	$(BASEDIRECTORY)/util/ImageMaker/ImageMaker.exe $^ Disk.img
+	truncate -s 1440K Disk.img # 1.44MB 플로피 규격으로 패딩 (QEMU가 지오메트리를 인식 못 하면 BIOS 디스크 읽기가 멈춤)
 	@echo All Build Complete
 
 clean:
