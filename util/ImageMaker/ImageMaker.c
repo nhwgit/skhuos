@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #define SECTOR_SIZE 512
 #define KERNEL_INFO_OFFSET 5 // 부트로더의 TOTALSECTORCOUNT 위치
 
+int isSameFile(const char * a, const char * b);
 int appendFile(FILE * image, const char * fileName);
 void writeKernelInformation(const char * imageName, int totalSectorCount, int kernel32SectorCount);
 
@@ -11,6 +14,14 @@ int main(int argc, char * argv[]) {
 	if(argc < 5) {
 		fprintf(stderr, "usage: ImageMaker BootLoader.bin Kernel32.bin Kernel64.bin Disk.img\n");
 		return -1;
+	}
+
+	// 출력 이미지가 입력에 섞이면 쓰는 동시에 읽히면서 EOF에 도달하지 못하고 무한 증식함
+	for(int i=1; i<4; i++) {
+		if(isSameFile(argv[i], argv[4])) {
+			fprintf(stderr, "%s: output image must not be used as an input\n", argv[i]);
+			return -1;
+		}
 	}
 
 	FILE * image = fopen(argv[4], "wb");
@@ -27,6 +38,13 @@ int main(int argc, char * argv[]) {
 	writeKernelInformation(argv[4], kernel32SectorCount + kernel64SectorCount, kernel32SectorCount);
 	printf("%s create complete\n", argv[4]);
 	return 0;
+}
+
+int isSameFile(const char * a, const char * b) { // 경로 표기가 달라도 같은 파일이면 참 (출력이 아직 없으면 경로 문자열로 비교)
+	struct stat statA, statB;
+	if(stat(a, &statA) != 0 || stat(b, &statB) != 0)
+		return strcmp(a, b) == 0;
+	return statA.st_dev == statB.st_dev && statA.st_ino == statB.st_ino;
 }
 
 int appendFile(FILE * image, const char * fileName) { // 512바이트 배수로 패딩 후 섹터 수 반환
