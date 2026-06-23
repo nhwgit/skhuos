@@ -1,8 +1,8 @@
 NASM32 = nasm
-GCC32 = x86_64-pc-linux-gcc.exe -c -m32 -ffreestanding -Werror=implicit-function-declaration -I../../common
-LD32 = x86_64-pc-linux-ld.exe -melf_i386 -T ../elf_i386.x -nostdlib -e Main -Ttext 0x10200
+GCC32 = gcc -c -m32 -ffreestanding -fno-pie -fno-stack-protector -Werror=implicit-function-declaration -I../../common
+LD32 = ld -melf_i386 -T ../elf_i386.x -nostdlib -e Main -Ttext 0x10200
 
-OBJCOPY32 = x86_64-pc-linux-objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
+OBJCOPY32 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 
 OBJECTDIRECTORY = tmp
 SOURCEDIRECTORY	= src

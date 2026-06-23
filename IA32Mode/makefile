@@ -1,8 +1,8 @@
 NASM64 = nasm -f elf64
-GCC64 = x86_64-pc-linux-gcc.exe -c -m64 -ffreestanding -Werror=implicit-function-declaration -I../../common
-LD64 = x86_64-pc-linux-ld.exe -melf_x86_64 -T ../elf_x86_64.x -nostdlib -e Main -Ttext 0x600000
+GCC64 = gcc -c -m64 -ffreestanding -fno-pie -fno-stack-protector -Werror=implicit-function-declaration -I../../common
+LD64 = ld -melf_x86_64 -T ../elf_x86_64.x -nostdlib -e Main -Ttext 0x600000
 
-OBJCOPY64 = x86_64-pc-linux-objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
+OBJCOPY64 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 
 OBJECTDIRECTORY = tmp
 SOURCEDIRECTORY	= src
