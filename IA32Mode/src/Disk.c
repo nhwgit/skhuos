@@ -23,7 +23,7 @@ void initDisk(void) {
 	isSecondaryInterruptOccur = FALSE;
 	setPort(PRIMARY_DIGITAL_OUTPUT, 0);
 	setPort(SECONDARY_DIGITAL_OUTPUT, 0);
-	readInformation(PRIMARY, MASTER);
+	readInformation(FS_PRIMARY, FS_MASTER);
 }
 
 void setDiskInterruptFlag(bool isPrimary, bool isSecondary) {

@@ -8,6 +8,10 @@
 #define MASTER	TRUE
 #define SLAVE	FALSE
 
+// 파일시스템이 사용하는 디스크 (hda는 OS 이미지, hdb가 파일시스템)
+#define FS_PRIMARY	PRIMARY
+#define FS_MASTER	SLAVE
+
 #define PRIMARY_DATA 0x1F0
 #define PRIMARY_ERROR 0x1F1
 #define PRIMARY_SECTOR_COUNT 0x1F2
