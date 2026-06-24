@@ -70,6 +70,7 @@ static BYTE driveFlag(bool isMaster) {
 }
 
 static void sendDiskCommand(bool isPrimary, bool isMaster, char sectorCount, int LBA, BYTE command) {
+	while(!waitNoBusy(isPrimary)); // 이전 명령이 끝나기 전(BUSY)에 보낸 명령은 무시됨
 	setPort(portAddress[isPrimary][SECTOR_COUNT], (int)sectorCount);
 	setPort(portAddress[isPrimary][SECTOR_NUMBER], LBA);
 	setPort(portAddress[isPrimary][CYLINDER_LSB], LBA >> 8);
@@ -135,26 +136,20 @@ int writeSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char *
 	acquireLock(&diskMutex);
 	sendDiskCommand(isPrimary, isMaster, sectorCount, LBA, COMMAND_WRITE);
 
-	char status = 0;
-	while(1) {
-		status = getPort(portAddress[isPrimary][STATUS]);
-		if((status&STATUS_ERR)==STATUS_ERR) {
-			releaseLock(&diskMutex);
-			return 0;
-		}
-		if((status&STATUS_DRQ)==STATUS_DRQ) {
-			break;
-		}
-	}
 	for(int i=0; i<sectorCount; i++) {
+		char status = 0;
+		while(1) { // 섹터마다 DRQ를 기다려야 함 (이전 섹터 플러시 중에 보낸 데이터는 유실됨)
+			status = getPort(portAddress[isPrimary][STATUS]);
+			if((status&STATUS_ERR)==STATUS_ERR) {
+				releaseLock(&diskMutex);
+				return i;
+			}
+			if((status&STATUS_DRQ)==STATUS_DRQ)
+				break;
+		}
 		setDiskInterruptFlag(isPrimary, !isPrimary);
 		for(int j=0; j<256; j++) {
 			setPortWord(portAddress[isPrimary][DATA], ((WORD *)buffer)[i*256+j]);
-		}
-		status = getPort(portAddress[isPrimary][STATUS]);
-		if((status&STATUS_ERR)==STATUS_ERR) {
-			releaseLock(&diskMutex);
-			return 0;
 		}
 	}
 	releaseLock(&diskMutex);
