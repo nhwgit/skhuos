@@ -9,6 +9,7 @@ KERNEL32SECTORCOUNT: dw 0x02
 Entry:
    mov ax, 0x07C0
    mov ds, ax
+   mov byte [disk], dl; BIOS가 DL에 부팅 드라이브 번호를 넘겨줌
    mov ax, 0xB800
    mov es, ax
    mov si, 0x00
@@ -43,20 +44,12 @@ ResetDisk:
    int 0x13
    jc DiskError
 
-   mov [sectorNumber], byte 0x02
-   mov [trackNumber],  byte 0x00
-   mov [headNumber], byte 0x00
-
    ;print message
    push diskResetMessage
    push word [currentLine]
    push 0
    call Puts
    add sp, 6
-
-   mov si, 0x1000
-   mov es, si
-   mov bx, 0x0000
 
    mov di, [TOTALSECTORCOUNT]
 
@@ -66,31 +59,15 @@ ReadDisk:
 
 	sub di, 0x01
 
-	mov ah, 0x02
-	mov al, 0x1
-	mov ch, byte [trackNumber]
-	mov cl, byte [sectorNumber]
-	mov dh, byte [headNumber]
+	mov si, DAP
+	mov ah, 0x42; INT 13h 확장 읽기 (LBA)
 	mov dl, byte [disk]
 	int 0x13
 	jc DiskError
 
-	add si, 0x20
-	mov es, si
-
-	mov al, byte [sectorNumber]
-	add al, 0x01
-	mov byte [sectorNumber], al
-	cmp al, 18
-	jle ReadDisk
-
-	xor byte [headNumber], 0x1
-	mov byte [sectorNumber], 0x01
-
-	cmp byte [ headNumber ], 0x1
-	je ReadDisk
-
-	add byte [ trackNumber ], 0x01
+	add word [DAP+6], 0x20; 다음 512바이트 (세그먼트 단위)
+	add word [DAP+8], 0x01; 다음 LBA
+	adc word [DAP+10], 0x00
 	jmp ReadDisk
 
 ReadEnd:
@@ -191,12 +168,16 @@ currentLine: dw 0x0000
 oneLineSize: dw 80*2
 
 ;about disk
-disk: db 0x00
-hardDisk1: db 0x81
-hardDisk2: db 0x82
-trackNumber: db 0x00
-sectorNumber: db 0x02
-headNumber: db 0x00
+disk: db 0x80
+
+DAP:; INT 13h 확장 읽기용 Disk Address Packet
+	db 0x10; 패킷 크기
+	db 0x00
+	dw 0x0001; 읽을 섹터 수
+	dw 0x0000; 대상 오프셋
+	dw 0x1000; 대상 세그먼트
+	dd 0x00000001; 시작 LBA (부트로더 다음 섹터)
+	dd 0x00000000
 
 times 510 - ($-$$) db 0x00
 dw 0xAA55
