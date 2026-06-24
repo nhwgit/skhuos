@@ -1,5 +1,5 @@
 NASM64 = nasm -f elf64
-GCC64 = gcc -c -m64 -ffreestanding -fno-pie -fno-stack-protector -Werror=implicit-function-declaration -I../../common
+GCC64 = gcc -c -m64 -ffreestanding -fno-pie -fno-stack-protector -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Werror=implicit-function-declaration -I../../common
 LD64 = ld -melf_x86_64 -T ../elf_x86_64.x -nostdlib -e Main -Ttext 0x600000
 
 OBJCOPY64 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
