@@ -3,8 +3,11 @@
 
 SEGMENT .text
 jmp 0x07C0:Entry
-TOTALSECTORCOUNT: dw 0x06
-KERNEL32SECTORCOUNT: dw 0x02
+
+BootInfo:; 레이아웃은 common/BootInfo.h와 일치. 섹터 수는 빌드 시 ImageMaker가 시그니처를 찾아 기록
+	db 'SKHUBOOT'
+	TOTALSECTORCOUNT: dw 0x0000
+	LOADERSECTORCOUNT: dw 0x0000
 
 Entry:
    mov ax, 0x07C0

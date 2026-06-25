@@ -87,9 +87,9 @@ $(BUILD)/kernel.bin: $(BUILD)/kernel.elf
 
 # ---------------- tools & 디스크 이미지 ----------------
 
-$(BUILD)/tools/imagemaker: tools/imagemaker/ImageMaker.c
+$(BUILD)/tools/imagemaker: tools/imagemaker/ImageMaker.c common/BootInfo.h
 	@mkdir -p $(dir $@)
-	$(CC) -o $@ $<
+	$(CC) -o $@ tools/imagemaker/ImageMaker.c
 
 $(BUILD)/Disk.img: $(BUILD)/boot.bin $(BUILD)/loader.bin $(BUILD)/kernel.bin $(BUILD)/tools/imagemaker
 	$(BUILD)/tools/imagemaker $(BUILD)/boot.bin $(BUILD)/loader.bin $(BUILD)/kernel.bin $@
