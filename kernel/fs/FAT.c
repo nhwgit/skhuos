@@ -68,10 +68,17 @@ bool format(void) {
 
 	if(!writeSector(FS_PRIMARY, FS_MASTER, 1, 0, buffer512))
 		return FALSE;
-	memsetZero(buffer512, sizeof(buffer512));
-	for(int i=1; i<sectorCount; i++) {
-		writeSector(FS_PRIMARY, FS_MASTER, 1, i, buffer512);
+
+	memsetZero(buffer4096, sizeof(buffer4096));
+	int initSectorCount = clusterLinkSectorCount + CLUSTER_SIZE/SECTOR_SIZE;
+	for(int i=0; i<initSectorCount; i+=CLUSTER_SIZE/SECTOR_SIZE) {
+		int writeCount = initSectorCount - i;
+		if(writeCount > CLUSTER_SIZE/SECTOR_SIZE)
+			writeCount = CLUSTER_SIZE/SECTOR_SIZE;
+		if(writeSector(FS_PRIMARY, FS_MASTER, writeCount, 1+i, buffer4096) != writeCount)
+			return FALSE;
 	}
+	memsetZero(buffer512, sizeof(buffer512));
 	((DWORD*)buffer512)[0] = 0xFFFFFFFF; // 0번 클러스터(루트 디렉터리) 사용중 표시
 	writeSector(FS_PRIMARY, FS_MASTER, 1, 1, buffer512);
 	return TRUE;
