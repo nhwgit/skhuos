@@ -1,7 +1,7 @@
 [BITS 64]
 SEGMENT .text
 
-extern testHandler, keyboardHandler, timerHandler, disk1Handler, disk2Handler
+extern testHandler, keyboardHandler, timerHandler, disk1Handler, disk2Handler, exceptionHandler
 
 %macro SAVEREG 0
     push r15
@@ -70,41 +70,52 @@ IV%1:
     iretq
 %endmacro
 
-; 에러 코드가 있는 벡터 (벡터 번호, 핸들러 함수)
-%macro ISR_ERRCODE 2
+SAVEREG_SIZE equ 19*8 ; SAVEREG가 쌓는 크기 (GPR 15개 + 세그먼트 4개) — CPU가 쌓은 프레임 접근 오프셋
+
+; 에러 코드가 없는 예외 (벡터 번호) — exceptionHandler가 halt하므로 복귀 없음
+%macro EXC 1
 global IV%1
 IV%1:
     SAVEREG
     mov rdi, %1
-    mov rsi, qword [ rbp + 8 ]
-    call %2
-    LOADREG
-    add rsp, 8
-    iretq
+    xor rsi, rsi
+    mov rdx, qword [rsp + SAVEREG_SIZE] ; RIP
+    call exceptionHandler
+%endmacro
+
+; 에러 코드가 있는 예외 (벡터 번호)
+%macro EXC_ERRCODE 1
+global IV%1
+IV%1:
+    SAVEREG
+    mov rdi, %1
+    mov rsi, qword [rsp + SAVEREG_SIZE]     ; 에러 코드
+    mov rdx, qword [rsp + SAVEREG_SIZE + 8] ; RIP
+    call exceptionHandler
 %endmacro
 
 ; 예외 핸들러
-ISR         00, testHandler ; divide error
-ISR         01, testHandler ; debug error
-ISR         02, testHandler ; RNMI
-ISR         03, testHandler ; BreakPoint
-ISR         04, testHandler ; Overflow
-ISR         05, testHandler ; BoundRangeExceeded
-ISR         06, testHandler ; InvalidOpcode
-ISR         07, testHandler ; DeviceNotAvailable
-ISR_ERRCODE 08, testHandler ; DoubleFault
-ISR         09, testHandler ; CoprocessorSegmentOverrun
-ISR_ERRCODE 10, testHandler ; InvalidTSS
-ISR_ERRCODE 11, testHandler ; SegmentNotPresent
-ISR_ERRCODE 12, testHandler ; StackSeg
-ISR_ERRCODE 13, testHandler ; GeneralProtection
-ISR_ERRCODE 14, testHandler ; PageFault
-ISR         15, testHandler
-ISR         16, testHandler ; FPUError
-ISR_ERRCODE 17, testHandler ; AlignmentCheck
-ISR         18, testHandler ; MachineCheck
-ISR         19, testHandler ; SIMDError
-ISR         20, testHandler ; RETCException
+EXC         00 ; divide error
+EXC         01 ; debug error
+EXC         02 ; NMI
+EXC         03 ; BreakPoint
+EXC         04 ; Overflow
+EXC         05 ; BoundRangeExceeded
+EXC         06 ; InvalidOpcode
+EXC         07 ; DeviceNotAvailable
+EXC_ERRCODE 08 ; DoubleFault
+EXC         09 ; CoprocessorSegmentOverrun
+EXC_ERRCODE 10 ; InvalidTSS
+EXC_ERRCODE 11 ; SegmentNotPresent
+EXC_ERRCODE 12 ; StackSeg
+EXC_ERRCODE 13 ; GeneralProtection
+EXC_ERRCODE 14 ; PageFault
+EXC         15
+EXC         16 ; FPUError
+EXC_ERRCODE 17 ; AlignmentCheck
+EXC         18 ; MachineCheck
+EXC         19 ; SIMDError
+EXC         20 ; 21 이상 예약 벡터도 IDT에서 IV20으로 수렴
 
 ; 인터럽트 핸들러
 ISR 32, timerHandler    ; Timer

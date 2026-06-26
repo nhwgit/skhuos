@@ -8,5 +8,7 @@ void loadIDTR(QWORD address);
 void enableInterrupt(void);
 void disableInterrupt(void);
 QWORD getRFLAGs(void);
+QWORD getCR2(void);
+void halt(void);
 
 #endif

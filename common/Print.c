@@ -81,6 +81,22 @@ void printInt(int num, int radix) {
 		viewCharacter(charNum[i]);
 }
 
+void printHex(QWORD num) {
+	char charNum[16] = {0};
+	int count = 0;
+	if(num==0) {
+		viewCharacter('0');
+		return;
+	}
+	while(num>0) {
+		charNum[count++] = "0123456789ABCDEF"[num%16];
+		num /= 16;
+	}
+	reverseArray(charNum, count);
+	for(int i=0; i<count; i++)
+		viewCharacter(charNum[i]);
+}
+
 int printStateAndReturn(bool state) {
 	if(state==TRUE)
 		puts(okSign);

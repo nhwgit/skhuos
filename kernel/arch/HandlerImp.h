@@ -1,5 +1,8 @@
 #ifndef __HANDLER_IMP_H__
 #define __HANDLER_IMP_H__
+#include "Type.h"
+
+#define PAGE_FAULT_VECTOR 14
 
 #define IRQ_TIMER 		0
 #define IRQ_KEYBOARD 	1
@@ -17,6 +20,7 @@
 #define IRQ_DISK1		14
 #define IRQ_DISK2		15
 
+void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip);
 void testHandler(int vectorNumber);
 void keyboardHandler(int vectorNumber);
 void timerHandler(int vectorNumber);

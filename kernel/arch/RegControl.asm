@@ -1,7 +1,7 @@
 [bits 64]
 
 SEGMENT .text
-global loadGDTR, loadTR, loadIDTR, enableInterrupt, disableInterrupt, getRFLAGs
+global loadGDTR, loadTR, loadIDTR, enableInterrupt, disableInterrupt, getRFLAGs, getCR2, halt
 
 loadGDTR:
 	lgdt [rdi]
@@ -26,4 +26,12 @@ disableInterrupt:
 getRFLAGs:
 	pushfq
 	pop rax
+	ret
+
+getCR2:
+	mov rax, cr2
+	ret
+
+halt:
+	hlt
 	ret

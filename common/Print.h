@@ -25,6 +25,7 @@ void printString(const char* str);
 void printStringLine(const char* str, int line);
 void puts(const char* str);
 void printInt(int num, int radix);
+void printHex(QWORD num);
 int printStateAndReturn(bool state);
 void fillLastLineBlank(void);
 void cursorInit(void);
