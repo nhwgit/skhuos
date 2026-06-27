@@ -68,5 +68,6 @@ BYTE scanToASCII(BYTE scanCode);
 void initKeyboard(void);
 void inputQueue(BYTE scanCode);
 bool getQueue(char * data);
+void rebootSystem(void);
 
 #endif

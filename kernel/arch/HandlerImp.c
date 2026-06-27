@@ -1,6 +1,7 @@
 #include "Print.h"
 #include "Type.h"
 #include "arch/HandlerImp.h"
+#include "arch/CPU.h"
 #include "arch/RegControl.h"
 
 static const char * exceptionNames[] = {

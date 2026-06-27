@@ -10,6 +10,9 @@ void initializeDescriptor(void) {
 	initializeTSS();
 	initializeIDTR();
 	initializeIDT();
+	loadGDTR(GDTR_ADDRESS);
+	loadTR(TSS_DESCRIPTOR_OFFSET);
+	loadIDTR(IDTR_ADDRESS);
 }
 
 void initializeIDTR(void) {

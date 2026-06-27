@@ -1,7 +1,6 @@
 #include "shell/Shell.h"
 #include "Print.h"
 #include "String.h"
-#include "arch/portControl.h"
 #include "proc/Process.h"
 #include "drivers/Disk.h"
 #include "shell/editor.h"
@@ -114,8 +113,7 @@ static void memUsed(const char * arg) { // 램 사용량
 }
 
 static void reboot(const char * arg) {
-	setPort(0x64, 0xD1);
-	setPort(0x60, 0x00);
+	rebootSystem();
 }
 
 static void printDiskCapacity(const char * arg) {

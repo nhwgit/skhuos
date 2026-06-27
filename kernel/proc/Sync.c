@@ -1,5 +1,5 @@
 #include "proc/Sync.h"
-#include "arch/RegControl.h"
+#include "arch/CPU.h"
 #include "Type.h"
 #include "proc/Process.h"
 

@@ -135,6 +135,13 @@ int getScanCode(void) {
 	return getPort(BUFFER);
 }
 
+void rebootSystem(void) {
+	while(isInputBufferFull());
+	setPort(STATE_REG, 0xD1); // 8042 출력 포트 쓰기 명령
+	while(isInputBufferFull());
+	setPort(BUFFER, 0x00); // 출력 포트 비트 0(리셋 라인)=0 → CPU 리셋
+}
+
 void inputQueue(BYTE scanCode) {
 	BYTE ascii = scanToASCII(scanCode);
 	if(ascii!=0) {

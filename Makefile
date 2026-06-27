@@ -79,7 +79,21 @@ $(KERNEL_ENTRY): kernel/arch/Entry.s
 	@mkdir -p $(dir $@)
 	$(NASM) -f elf64 -o $@ $<
 
-$(BUILD)/kernel.elf: $(KERNEL_OBJS) kernel/linker.ld
+# 계층 규칙: 포트 I/O(arch/portControl.h)는 arch·drivers만, 특권 레지스터(arch/RegControl.h)는 arch만
+# include 가능. 상위 계층은 arch/CPU.h와 드라이버 API를 통해서만 하드웨어에 접근한다.
+layering-check:
+	@fail=0; \
+	for f in $$(grep -rl 'arch/portControl\.h' kernel); do \
+		case $$f in kernel/arch/*|kernel/drivers/*) ;; \
+		*) echo "layering: $$f — arch/portControl.h는 arch·drivers 전용 (드라이버 API를 사용할 것)"; fail=1;; esac; \
+	done; \
+	for f in $$(grep -rl 'arch/RegControl\.h' kernel); do \
+		case $$f in kernel/arch/*) ;; \
+		*) echo "layering: $$f — arch/RegControl.h는 arch 내부 전용 (arch/CPU.h를 사용할 것)"; fail=1;; esac; \
+	done; \
+	exit $$fail
+
+$(BUILD)/kernel.elf: $(KERNEL_OBJS) kernel/linker.ld | layering-check
 	$(LD) -melf_x86_64 -T kernel/linker.ld -nostdlib -e Main -Ttext 0x600000 -o $@ $(KERNEL_OBJS)
 
 $(BUILD)/kernel.bin: $(BUILD)/kernel.elf
@@ -97,6 +111,6 @@ $(BUILD)/Disk.img: $(BUILD)/boot.bin $(BUILD)/loader.bin $(BUILD)/kernel.bin $(B
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all clean
+.PHONY: all clean layering-check
 
 -include $(LOADER_OBJS:.o=.d) $(KERNEL_OBJS:.o=.d)

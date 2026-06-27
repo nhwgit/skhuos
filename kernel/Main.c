@@ -1,7 +1,7 @@
 #include "Type.h"
 #include "Print.h"
 #include "arch/Descriptor.h"
-#include "arch/RegControl.h"
+#include "arch/CPU.h"
 #include "mm/Memory.h"
 #include "drivers/Keyboard.h"
 #include "lib/Queue.h"
@@ -19,11 +19,6 @@ void Main(void) {
 
 	initializeDescriptor();
 	puts("Initialize Descriptor");
-
-	loadGDTR(GDTR_ADDRESS);
-	loadTR(TSS_DESCRIPTOR_OFFSET);
-	loadIDTR(IDTR_ADDRESS);
-	puts("Descriptor Load Complete");
 
 	initializePIC();
 	setIMR(0);
