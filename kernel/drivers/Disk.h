@@ -91,10 +91,8 @@ typedef struct diskInformation {
 }DiskInformation;
 
 void initDisk(void);
-bool waitNoBusy(bool primary);
-bool waitReady(bool primary);
 bool readInformation(bool primary, bool master);
-void setDiskInterruptFlag(bool isPrimary, bool isSecondary);
+bool waitInterrupt(bool isPrimary); // 인터럽트 구동 I/O 전환 대비 (현재 미사용)
 int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer);
 int writeSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer);
 int getTotalSector(void);

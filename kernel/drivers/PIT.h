@@ -29,10 +29,18 @@
 #define PIT_CONTROL_COUNTER1 0x40
 #define PIT_CONTROL_COUNTER2 0x80
 
+// 카운터0을 폴링해 경과 클럭을 재는 스톱워치 (PIT 재프로그래밍 없이 사용 가능)
+typedef struct pitStopwatch {
+	WORD lastCounter;
+	int elapsedClock;
+} PITStopwatch;
+
 void sleep(long us);
 int usToClock(QWORD us);
 int msToClock(QWORD ms);
 void initializePIT(int clock, bool periodic);
 WORD readCounter0(void);
+void startStopwatch(PITStopwatch * watch);
+int getElapsedClock(PITStopwatch * watch);
 
 #endif
