@@ -134,18 +134,7 @@ qemu-system-x86_64 -m 64 -hda build/Disk.img -hdb build/HDD.img -boot c
   - `CR4`(PAE 활성화), `CR3`(PML4E 주소 지정), `IA32_EFER` 레지스터 설정 후 IA-32e(64비트) 모드로 진입.
 
 <details>
-<summary>GDT 및 Paging 설정 코드 보기</summary>
-
-```nasm
-; GDT (Global Descriptor Table) 설정 예시
-gdtr:
-    dw gdtEnd - gdt - 1
-    dd gdt + 0x10000 - $$
-gdt:
-    dq 0x0000000000000000 ; Null Descriptor
-    ; Data / Code Descriptors 생략...
-gdtEnd:
-```
+<summary>Paging 설정 코드 보기 (loader/Page.c)</summary>
 
 ```c
 // Page Table 설정 (4KB 단위)
@@ -169,39 +158,49 @@ for (int i = 0; i < KERNEL_SIZE * 512; i++) {
 - **핸들러 등록 API**: 어셈블리 스텁(NASM 매크로로 일괄 생성)은 공용 디스패처 하나로 수렴하고, 각 드라이버가 초기화 시 `registerInterruptHandler(벡터, 함수)`로 자신의 ISR을 등록. 벡터-핸들러 매핑이 arch 계층에서 분리되어 새 장치 추가 시 드라이버 쪽 등록만으로 완결.
 
 <details>
-<summary>SAVEREG 매크로 코드 보기 (Handler.asm)</summary>
+<summary>인터럽트/예외 스텁 매크로 보기 (Handler.asm)</summary>
+
+벡터 48개의 스텁을 매크로 3벌로 일괄 생성합니다. 예외는 CPU가 스택에 에러 코드를 쌓는지 여부에 따라 두 매크로로 나뉩니다.
 
 ```nasm
-%macro SAVEREG 0
-    push r15
-    push r14
-    push r13
-    push r12
-    push r11
-    push r10
-    push r9
-    push r8
-    push rbp
-    push rdi
-    push rsi
-    push rdx
-    push rcx
-    push rbx
-    push rax
-
-    mov ax, ds
-    push rax
-    mov ax, es
-    push rax
-    push fs
-    push gs
-
-    mov ax, 0x08      ; 커널 데이터 세그먼트로 전환
-    mov ds, ax
-    mov es, ax
-    mov gs, ax
-    mov fs, ax
+; 외부 인터럽트 스텁 (벡터 번호) — C 디스패처가 등록된 핸들러로 분기
+%macro ISR 1
+IV%1:
+    SAVEREG
+    mov rdi, %1
+    call dispatchInterrupt
+    LOADREG
+    iretq
 %endmacro
+
+SAVEREG_SIZE equ 19*8 ; SAVEREG가 쌓는 크기 (GPR 15개 + 세그먼트 4개) — CPU가 쌓은 프레임 접근 오프셋
+
+; 에러 코드가 없는 예외 (벡터 번호) — exceptionHandler가 halt하므로 복귀 없음
+%macro EXC 1
+IV%1:
+    SAVEREG
+    mov rdi, %1
+    xor rsi, rsi
+    mov rdx, qword [rsp + SAVEREG_SIZE] ; RIP
+    call exceptionHandler
+%endmacro
+
+; 에러 코드가 있는 예외 (벡터 번호)
+%macro EXC_ERRCODE 1
+IV%1:
+    SAVEREG
+    mov rdi, %1
+    mov rsi, qword [rsp + SAVEREG_SIZE]     ; 에러 코드
+    mov rdx, qword [rsp + SAVEREG_SIZE + 8] ; RIP
+    call exceptionHandler
+%endmacro
+
+; 외부 인터럽트 스텁 (32~47): 벡터별 처리는 registerInterruptHandler 등록으로 결정
+%assign vec 32
+%rep 16
+ISR %[vec]
+%assign vec vec+1
+%endrep
 ```
 
 </details>
@@ -401,6 +400,8 @@ ESC → w → Enter    # 저장 후 종료
 
 ## 💡 회고 및 극복한 점 (Challenges)
 
+전용 디버거도 표준 라이브러리도 없는 bare-metal 환경이라, VGA 텍스트 메모리(0xB8000) 직접 제어를 통한 화면 출력부터 문자열·메모리 조작 함수까지 직접 구현하며 진행했습니다. 하드웨어 레지스터에 단 1비트만 잘못 써도 "논리 오류"가 아닌 "재부팅"으로 나타나는 환경이라, 재현 가능한 최소 단계와 체크포인트 출력을 먼저 갖추는 것이 디버깅 속도를 결정했습니다. 아래는 그 환경에서 실제로 만나고 해결한 문제들의 기록입니다.
+
 1. **메모리 적재 주소 불일치 버그**
    - **증상**: 코드와 변수를 물리 메모리에 직접 적재하는 과정에서 데이터가 엉뚱한 주소에 쓰여, 쓰레기 값 출력 또는 예고 없는 재부팅(트리플 폴트) 발생.
    - **추적**: VGA 출력으로 단계별 체크포인트를 찍어 죽는 지점을 이분 탐색하고, QEMU 메모리 덤프로 기대 주소와 실제 적재 내용을 대조.
@@ -410,24 +411,47 @@ ESC → w → Enter    # 저장 후 종료
    - **원인**: 이미지 생성 도구의 자기참조. 산출물이 입력과 같은 디렉터리에 놓이던 구조에서 이전 빌드의 이미지가 입력 목록에 섞였고, 출력 파일을 자기 입력으로 읽는 순간 "쓴 만큼 다시 읽히는" 루프가 되어(`cat A B > B`와 같은 병리) EOF에 도달하지 못한 채 디스크가 찰 때까지 증식.
    - **해결**: 입력을 명시적 경로로 고정하고 산출물을 소스 트리 밖 `build/`로 분리해 자기참조를 구조적으로 차단. `ImageMaker` 자체에도 stat 기반 입력·출력 동일성 검사를 추가해 코드 레벨 방어를 완성했습니다.
    - **배운 점**: 빌드 도구의 사소한 버그가 호스트 자원 전체를 고갈시킬 수 있으며, 산출물 크기를 기대값과 대조하는 값싼 불변식 검증만 갖춰도 폭주형 버그를 조기에 잡을 수 있습니다.
-3. **Bare-metal 환경의 디버깅 한계**
-   - 전용 디버거가 없는 환경에서 메모리 덤프와 화면 출력에 의존해 디버깅했습니다. 하드웨어 레지스터에 단 1비트만 잘못 써도 "논리 오류"가 아닌 "재부팅"으로 나타나기 때문에, 재현 가능한 최소 단계와 체크포인트 출력을 먼저 갖추는 것이 디버깅 속도를 결정한다는 것을 배웠습니다.
-4. **표준 라이브러리(C Standard Library) 부재**
-   - `printf`, `malloc` 등은 모두 OS의 시스템 콜 위에 구현된 것이라 bare-metal에서는 쓸 수 없습니다. VGA 텍스트 메모리(0xB8000) 직접 제어를 통한 화면 출력부터 문자열/메모리 조작 함수까지 직접 구현했습니다.
-5. **수년 만의 전수 리팩토링 — "컴파일이 된다"와 "맞는 코드"의 간극**
+3. **수년 만의 전수 리팩토링 — "컴파일이 된다"와 "맞는 코드"의 간극**
    - **발견**: 졸업 후 코드를 전수 점검하면서 암시적 함수 선언 탓에 인자 개수가 틀린 호출이 그대로 컴파일되고 있었고, 헤더에 정의된 static 배열이 include하는 파일마다 49KB짜리 사본을 만들고 있었으며, 괄호가 빠진 `if(isOutputBufferFull)`처럼 항상 참인 조건이 잠복해 있었습니다.
    - **해결**: 헤더를 실제 공개 API와 일치시키고 `-Werror=implicit-function-declaration`으로 같은 유형의 문제를 컴파일 단계에서 차단. 문자열만 다른 프로세스 함수 24벌과 인터럽트 스텁 38벌을 함수 테이블과 NASM 매크로로 통합해 약 4,300줄을 3,400줄로 줄였습니다.
    - **배운 점**: 관대한 컴파일 설정의 freestanding 환경에서는 "돌아간다"가 정합성을 보증하지 않으며, 경고를 에러로 승격하고 헤더를 단일 진실 공급원으로 유지하는 것이 사후 디버깅보다 훨씬 저렴합니다.
-6. **최신 툴체인으로의 빌드 이전**
+4. **최신 툴체인으로의 빌드 이전**
    - **증상**: Cygwin 크로스 컴파일러 전제 빌드를 WSL 네이티브 gcc로 이전하자, 최신 gcc의 기본값(PIE, 스택 프로텍터)이 고정 주소 링크를 깨뜨렸고, 구조체 복사의 SSE 자동 벡터화로 파일 생성 명령 실행 순간 #UD(invalid opcode) 예외가 발생.
    - **해결**: `-fno-pie -fno-stack-protector`와 freestanding 커널의 표준 플래그 `-mno-sse -mno-sse2 -mno-mmx -mno-red-zone`을 명시.
    - **배운 점**: bare-metal 코드는 툴체인 기본값 변화에 특히 취약하므로, 가정하는 옵션을 빌드 스크립트에 명시적으로 고정하고 빌드부터 QEMU 실행까지의 절차 전체를 `run.bat`으로 저장소에 코드화해 재현성을 확보했습니다.
-7. **부팅 방식 전환이 드러낸 드라이버의 잠복 레이스 버그**
+5. **부팅 방식 전환이 드러낸 드라이버의 잠복 레이스 버그**
    - **증상**: 부팅을 플로피(CHS)에서 하드디스크 + `INT 13h` 확장 LBA 읽기로 전환하며 검증하던 중, `formatting`이 첫 섹터만 쓰고 무한 대기하고 파일을 만들어도 `ls`에 보이지 않는 문제 발견.
    - **추적**: 디스크 이미지 mtime 관찰로 "느린 것"이 아니라 "멈춘 것"임을 판별 → git 원본 버전에서 같은 증상을 재현해 전환 작업의 회귀가 아닌 기존 잠복 버그임을 분리 → QEMU IDE 트레이스(`--trace ide_sector_write`)로 8섹터 쓰기가 3섹터에서 끊기는 것을 확인.
    - **원인·해결**: 둘 다 ATA 프로토콜의 대기 규정 생략. 1) 명령 발행 전 이전 명령의 BUSY 해제를 확인하지 않아 디바이스가 명령을 무시(커널은 오지 않을 DRQ를 영원히 대기) 2) 멀티섹터 쓰기에서 첫 DRQ만 확인하고 데이터를 연속으로 밀어넣어 플러시 중 보낸 데이터가 유실. 각각 BUSY 해제 대기와 "섹터마다 DRQ 대기" 구조로 수정했습니다.
    - **배운 점**: 과거 환경에서의 정상 동작은 정확성이 아니라 에뮬레이터 타이밍이 우연히 관대했던 것입니다. 하드웨어 프로토콜의 대기 조건은 "지금 돌아가니까"로 생략하면 플랫폼이나 버전이 바뀔 때 레이스로 되돌아옵니다.
-8. **예외 핸들러 개선 — 무한 출력에서 상태 덤프 후 정지로**
+6. **예외 핸들러 개선 — 무한 출력에서 상태 덤프 후 정지로**
    - **증상**: 예외가 발생하면 "exception occur!"만 무한 출력되어 어느 명령이 왜 죽었는지 알 수 없었습니다. fault류 예외는 원인을 제거하지 않고 `iretq`로 복귀하면 같은 명령이 재실행되어 같은 예외가 끝없이 반복되기 때문입니다. 위의 #UD 사태 때 원인 특정이 늦어진 직접 원인이었습니다.
    - **해결**: 벡터별 예외 이름과 RIP·에러 코드, 페이지 폴트면 CR2(폴트 주소)까지 덤프한 뒤 인터럽트를 끄고 halt하도록 재설계. CPU가 스택에 쌓는 인터럽트 프레임이 에러 코드 유무에 따라 달라지는 점을 어셈블리 매크로 2개로 분리했고, 이 과정에서 기존 에러 코드 참조가 프레임 포인터가 아닌 인터럽트당한 시점의 rbp를 그대로 역참조하는 잠복 버그임을 발견해 rsp 기준 정확한 오프셋으로 교체했습니다.
    - **배운 점**: 검증용으로 `1/zero`를 심자 gcc가 idiv 없이 비교 시퀀스로 최적화해(1을 나눈 몫이 0이 아니려면 제수가 ±1뿐) 예외가 아예 발생하지 않았고, objdump로 확인한 뒤 분자도 volatile 변수로 바꿔서야 #DE를 유발할 수 있었습니다. 죽는 순간의 상태를 보존하는 진단 코드가 디버깅 속도를 결정하며, 예외를 일부러 일으키는 검증 코드조차 컴파일러 최적화를 통과해야 한다는 것을 배웠습니다.
+7. **증상 없이 잠복해 있던 디스크 대기 코드 정리 — 횟수 기반 타임아웃과 뒤집힌 플래그**
+   - **발견**: 코드 점검 중 디스크 드라이버에서 두 가지 잠복 문제를 발견했습니다. ① 상태 대기가 고정 횟수(21억 회) 스핀이라 타임아웃의 실제 길이가 CPU 속도에 비례해 달라지고, 호출부는 `while(!waitReady())`처럼 그 타임아웃을 다시 무한 재시도로 감싸 사실상 무한 대기였습니다. ② 명령 발행 전 인터럽트 플래그 "초기화"가 인자 실수(`isPrimary, !isPrimary`)로 정작 명령을 보내는 채널의 플래그를 세워 버려, IDENTIFY 완료 대기(`waitInterrupt`)가 항상 즉시 통과하고 있었습니다 — QEMU가 명령 직후 데이터를 준비해 주는 덕분에 증상이 전혀 없었을 뿐입니다.
+   - **해결**: PIT 카운터0을 폴링하는 스톱워치를 만들어(리로드 값을 기억해 랩어라운드를 보정하므로 PIT 재프로그래밍 없이, 인터럽트 비활성 구간에서도 동작) 모든 디스크 대기를 시간 기반 타임아웃으로 교체하고, 실패를 반환 코드로 호출부까지 전파했습니다. 플래그는 자기 채널만 지우는 함수로 의미를 바로잡고 ISR도 자기 채널만 세우게 했으며, 부팅 초기(인터럽트 활성화 전)에 호출되는 IDENTIFY는 표준 PIO 규약대로 DRQ 폴링으로 전환했습니다.
+   - **배운 점**: 증상이 없다는 것은 코드가 맞다는 증거가 아니라 환경이 관대하다는 뜻일 수 있습니다(5번의 연장). 특히 폴링이 인터럽트 경로를 가리는 구조에서는 플래그류 버그가 구조 전환(인터럽트 구동 I/O) 시점에야 터지므로, 전환 전에 의미 단위 점검으로 지뢰를 미리 제거해야 합니다. 그리고 대기·타임아웃은 횟수가 아니라 시간으로 정의해야 플랫폼이 바뀌어도 의미가 보존됩니다.
+
+   <details>
+   <summary>PIT 스톱워치 구현 보기 (PIT.c)</summary>
+
+   ```c
+   void startStopwatch(PITStopwatch * watch) {
+       watch->lastCounter = readCounter0();
+       watch->elapsedClock = 0;
+   }
+
+   // 리로드 주기당 1회 이상 호출해야 랩어라운드를 놓치지 않음
+   int getElapsedClock(PITStopwatch * watch) {
+       WORD now = readCounter0();
+       int delta = watch->lastCounter - now; // 다운 카운터라 정상 진행 시 양수
+       if(delta < 0)
+           delta += counter0Reload;
+       watch->lastCounter = now;
+       watch->elapsedClock += delta;
+       return watch->elapsedClock;
+   }
+   ```
+
+   </details>
