@@ -8,8 +8,9 @@
 
 static Mutex diskMutex = {0,};
 static DiskInformation disk = {0,};
-static bool isPrimaryInterruptOccur = FALSE;
-static bool isSecondaryInterruptOccur = FALSE;
+// ISR과 waitInterrupt 스핀 루프가 공유 — volatile이 아니면 최적화 시 루프에서 재로드가 생략될 수 있음
+static volatile bool isPrimaryInterruptOccur = FALSE;
+static volatile bool isSecondaryInterruptOccur = FALSE;
 #define WAIT_TIMEOUT_MS 500 // 상태 폴링 최대 대기 시간
 
 // [0]=SECONDARY, [1]=PRIMARY (bool 인덱스와 일치)
@@ -50,7 +51,7 @@ static void clearDiskInterruptFlag(bool isPrimary) {
 		isSecondaryInterruptOccur = FALSE;
 }
 
-bool waitInterrupt(bool isPrimary) {
+static bool waitInterrupt(bool isPrimary) {
 	int limit = msToClock(WAIT_TIMEOUT_MS);
 	PITStopwatch watch;
 	startStopwatch(&watch);
@@ -160,7 +161,13 @@ int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * 
 	}
 
 	for(int i=0; i<sectorCount; i++) {
-		if(!waitDataRequest(isPrimary)) {
+		if(!waitInterrupt(isPrimary)) {
+			releaseLock(&diskMutex);
+			return i;
+		}
+		clearDiskInterruptFlag(isPrimary);
+		// 상태 읽기가 INTRQ를 해제해야 다음 섹터 인터럽트의 엣지가 만들어짐
+		if(getPort(portAddress[isPrimary][STATUS])&STATUS_ERR) {
 			releaseLock(&diskMutex);
 			return i;
 		}
@@ -179,15 +186,25 @@ int writeSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char *
 		return 0;
 	}
 
+	// 첫 블록은 인터럽트 없이 DRQ만 세워짐 (ATA PIO data-out 프로토콜)
+	if(!waitDataRequest(isPrimary)) {
+		releaseLock(&diskMutex);
+		return 0;
+	}
+
 	for(int i=0; i<sectorCount; i++) {
-		// 섹터마다 DRQ를 기다려야 함 (이전 섹터 플러시 중에 보낸 데이터는 유실됨)
-		if(!waitDataRequest(isPrimary)) {
-			releaseLock(&diskMutex);
-			return i;
-		}
 		clearDiskInterruptFlag(isPrimary);
 		for(int j=0; j<256; j++) {
 			setPortWord(portAddress[isPrimary][DATA], ((WORD *)buffer)[i*256+j]);
+		}
+		// 섹터 플러시 완료(다음 블록 준비 또는 명령 종료) 인터럽트 대기
+		if(!waitInterrupt(isPrimary)) {
+			releaseLock(&diskMutex);
+			return i;
+		}
+		if(getPort(portAddress[isPrimary][STATUS])&STATUS_ERR) {
+			releaseLock(&diskMutex);
+			return i;
 		}
 	}
 	releaseLock(&diskMutex);

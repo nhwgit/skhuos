@@ -92,7 +92,6 @@ typedef struct diskInformation {
 
 void initDisk(void);
 bool readInformation(bool primary, bool master);
-bool waitInterrupt(bool isPrimary); // 인터럽트 구동 I/O 전환 대비 (현재 미사용)
 int readSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer);
 int writeSector(bool isPrimary, bool isMaster, char sectorCount, int LBA, char * buffer);
 int getTotalSector(void);
