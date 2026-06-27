@@ -165,6 +165,7 @@ for (int i = 0; i < KERNEL_SIZE * 512; i++) {
 - **IDT (Interrupt Descriptor Table)**: Interrupt Gate를 사용하여 다중 인터럽트 방지 및 컨텍스트 스위칭 간소화.
 - **PIC (Programmable Interrupt Controller)**: 마스터/슬레이브 PIC 초기화 및 IRQ 라우팅. 폴링 방식의 비효율성을 극복하고 이벤트 기반의 하드웨어 제어 구현.
 - **Context Saving/Loading**: 인터럽트 발생 시 레지스터 상태를 TSS(Task State Segment) 기반 스택에 저장(`SAVEREG`)하고 복원(`LOADREG`).
+- **핸들러 등록 API**: 어셈블리 스텁(NASM 매크로로 일괄 생성)은 공용 디스패처 하나로 수렴하고, 각 드라이버가 초기화 시 `registerInterruptHandler(벡터, 함수)`로 자신의 ISR을 등록. 벡터-핸들러 매핑이 arch 계층에서 분리되어 새 장치 추가 시 드라이버 쪽 등록만으로 완결.
 
 <details>
 <summary>SAVEREG 매크로 코드 보기 (Handler.asm)</summary>

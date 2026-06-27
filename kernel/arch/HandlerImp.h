@@ -3,6 +3,8 @@
 #include "Type.h"
 
 #define PAGE_FAULT_VECTOR 14
+#define RESERVED_VECTOR 20 // 스텁이 없는 예약 벡터(21~31, 48 이상)가 수렴하는 벡터
+#define INTERRUPT_VECTOR_COUNT 48
 
 #define IRQ_TIMER 		0
 #define IRQ_KEYBOARD 	1
@@ -20,9 +22,10 @@
 #define IRQ_DISK1		14
 #define IRQ_DISK2		15
 
+typedef void (*InterruptHandler)(int vectorNumber);
+
+void registerInterruptHandler(int vectorNumber, InterruptHandler handler);
+void dispatchInterrupt(int vectorNumber);
 void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip);
-void testHandler(int vectorNumber);
-void keyboardHandler(int vectorNumber);
-void timerHandler(int vectorNumber);
 
 #endif

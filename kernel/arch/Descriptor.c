@@ -3,25 +3,6 @@
 #include "arch/Descriptor.h"
 #include "arch/Handler.h"
 
-static QWORD isrAddress[48] = {
-		(QWORD)IV00, (QWORD)IV01, (QWORD)IV02, (QWORD)IV03, // 0~3
-		(QWORD)IV04, (QWORD)IV05, (QWORD)IV06, // 4~6
-		(QWORD)IV07, (QWORD)IV08, // 7~8
-		(QWORD)IV09, (QWORD)IV10, // 9~10
-		(QWORD)IV11, (QWORD)IV12, // 11~12
-		(QWORD)IV13, (QWORD)IV14, (QWORD)IV15, // 13~15
-		(QWORD)IV16, (QWORD)IV17, (QWORD)IV18, // 16~18
-		(QWORD)IV19, (QWORD)IV20, (QWORD)IV20, // 19~21
-		(QWORD)IV20, (QWORD)IV20, (QWORD)IV20, // 22~24
-		(QWORD)IV20, (QWORD)IV20, (QWORD)IV20, // 25~27
-		(QWORD)IV20, (QWORD)IV20, (QWORD)IV20, // 28~30
-		(QWORD)IV20, // 31
-		(QWORD)IV32, (QWORD)IV33, (QWORD)IV34, (QWORD)IV35, // 32~35
-		(QWORD)IV36, (QWORD)IV37, (QWORD)IV38, // 36~38
-		(QWORD)IV39, (QWORD)IV40, (QWORD)IV41, // 39~41
-		(QWORD)IV42, (QWORD)IV43, (QWORD)IV44, // 42~44
-		(QWORD)IV45, (QWORD)IV46, (QWORD)IV47 // 45~47
-};
 void initializeDescriptor(void) {
 	initializeGDTR();
 	initializeGDT();
@@ -42,22 +23,14 @@ void initializeIDTR(void) {
 
 void initializeIDT(void) {
 	IDT * idt = (IDT *)IDT_ADDRESS;
-	for(int i=0; i<sizeof(isrAddress)/sizeof(QWORD); i++) {
-		idt[i].offset0To15 = isrAddress[i] & 0x0000FFFF;
+	for(int i=0; i<IDT_GATED_COUNT; i++) {
+		QWORD isr = (i<INTERRUPT_VECTOR_COUNT) ? vectorStubTable[i] : vectorStubTable[RESERVED_VECTOR];
+		idt[i].offset0To15 = isr & 0x0000FFFF;
 		idt[i].segment = CODE_DESCRIPTOR_OFFSET;
 		idt[i].ist = IST_COUNT & 0x07;
 		idt[i].flag = IDT_FLAG_P | IDT_FLAG_DPL0 | IDT_TYPE_INTERRUPT;
-		idt[i].offset16To31 = (isrAddress[i]& 0xFFFF0000) >> 16;
-		idt[i].offset32To63 = (isrAddress[i] >> 32);
-		idt[i].reserved = 0;
-	}
-	for(int i=sizeof(isrAddress)/sizeof(QWORD); i<IDT_GATED_COUNT; i++) {
-		idt[i].offset0To15 = (QWORD)IV20 & 0x0000FFFF;
-		idt[i].segment = CODE_DESCRIPTOR_OFFSET;
-		idt[i].ist = IST_COUNT & 0x07;
-		idt[i].flag = IDT_FLAG_P | IDT_FLAG_DPL0 | IDT_TYPE_INTERRUPT;
-		idt[i].offset16To31 = ((QWORD)IV20& 0xFFFF0000) >> 16;
-		idt[i].offset32To63 = ((QWORD)IV20 >> 32);
+		idt[i].offset16To31 = (isr & 0xFFFF0000) >> 16;
+		idt[i].offset32To63 = isr >> 32;
 		idt[i].reserved = 0;
 	}
 }

@@ -1,6 +1,8 @@
 #include "drivers/Disk.h"
+#include "drivers/PIC.h"
 #include "proc/Sync.h"
 #include "arch/portControl.h"
+#include "arch/HandlerImp.h"
 #include "Print.h"
 
 static Mutex diskMutex = {0,};
@@ -17,10 +19,22 @@ static WORD portAddress[2][11] = {{SECONDARY_DATA, SECONDARY_ERROR, SECONDARY_SE
 			PRIMARY_CYLINDER_MSB, PRIMARY_DRIVE_AND_HEADER, PRIMARY_STATUS, PRIMARY_COMMAND,
 			PRIMARY_DIGITAL_OUTPUT, PRIMARY_DRIVE_ADDRESS}};
 
+static void primaryDiskInterruptHandler(int vectorNumber) {
+	setDiskInterruptFlag(TRUE, FALSE);
+	sendEOI(vectorNumber - IRQ_START_OFFSET);
+}
+
+static void secondaryDiskInterruptHandler(int vectorNumber) {
+	setDiskInterruptFlag(FALSE, TRUE);
+	sendEOI(vectorNumber - IRQ_START_OFFSET);
+}
+
 void initDisk(void) {
 	initMutex(&diskMutex);
 	isPrimaryInterruptOccur = FALSE;
 	isSecondaryInterruptOccur = FALSE;
+	registerInterruptHandler(IRQ_START_OFFSET+IRQ_DISK1, primaryDiskInterruptHandler);
+	registerInterruptHandler(IRQ_START_OFFSET+IRQ_DISK2, secondaryDiskInterruptHandler);
 	setPort(PRIMARY_DIGITAL_OUTPUT, 0);
 	setPort(SECONDARY_DIGITAL_OUTPUT, 0);
 	readInformation(FS_PRIMARY, FS_MASTER);

@@ -1,9 +1,5 @@
 #include "Print.h"
-#include "drivers/Keyboard.h"
 #include "Type.h"
-#include "drivers/PIC.h"
-#include "proc/Process.h"
-#include "drivers/Disk.h"
 #include "arch/HandlerImp.h"
 #include "arch/RegControl.h"
 
@@ -31,6 +27,24 @@ static const char * exceptionNames[] = {
 	"Reserved", // 벡터 21 이상도 IV20으로 수렴하므로 마지막 엔트리가 받음
 };
 
+static InterruptHandler interruptHandlers[INTERRUPT_VECTOR_COUNT];
+
+void registerInterruptHandler(int vectorNumber, InterruptHandler handler) {
+	if(vectorNumber<0 || vectorNumber>=INTERRUPT_VECTOR_COUNT)
+		return;
+	interruptHandlers[vectorNumber] = handler;
+}
+
+void dispatchInterrupt(int vectorNumber) {
+	InterruptHandler handler = interruptHandlers[vectorNumber];
+	if(handler==NULL) {
+		puts("unhandled interrupt!");
+		printInt(vectorNumber, 10);
+		return;
+	}
+	handler(vectorNumber);
+}
+
 void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip) {
 	disableInterrupt();
 	moveToNextLine();
@@ -53,32 +67,4 @@ void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip) {
 	puts("System halted");
 	while(TRUE)
 		halt();
-}
-
-void testHandler(int vectorNumber) {
-	puts("unhandled interrupt!");
-	printInt(vectorNumber, 10);
-}
-
-void timerHandler(int vectorNumber) {
-	sendEOI(vectorNumber - IRQ_START_OFFSET);
-	timeoutSchedule();
-}
-
-void keyboardHandler(int vectorNumber) {
-	if(isOutputBufferFull()) {
-		BYTE scanCode = getScanCode();
-		inputQueue(scanCode);
-	}
-	sendEOI(vectorNumber - IRQ_START_OFFSET);
-}
-
-void disk1Handler(int vectorNumber) {
-	setDiskInterruptFlag(TRUE, FALSE);
-	sendEOI(vectorNumber - IRQ_START_OFFSET);
-}
-
-void disk2Handler(int vectorNumber) {
-	setDiskInterruptFlag(FALSE, TRUE);
-	sendEOI(vectorNumber - IRQ_START_OFFSET);
 }

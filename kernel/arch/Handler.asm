@@ -1,7 +1,7 @@
 [BITS 64]
 SEGMENT .text
 
-extern testHandler, keyboardHandler, timerHandler, disk1Handler, disk2Handler, exceptionHandler
+extern dispatchInterrupt, exceptionHandler
 
 %macro SAVEREG 0
     push r15
@@ -59,13 +59,12 @@ extern testHandler, keyboardHandler, timerHandler, disk1Handler, disk2Handler, e
 	pop r15
 %endmacro
 
-; 에러 코드가 없는 벡터 (벡터 번호, 핸들러 함수)
-%macro ISR 2
-global IV%1
+; 외부 인터럽트 스텁 (벡터 번호) — C 디스패처가 등록된 핸들러로 분기
+%macro ISR 1
 IV%1:
     SAVEREG
     mov rdi, %1
-    call %2
+    call dispatchInterrupt
     LOADREG
     iretq
 %endmacro
@@ -74,7 +73,6 @@ SAVEREG_SIZE equ 19*8 ; SAVEREG가 쌓는 크기 (GPR 15개 + 세그먼트 4개)
 
 ; 에러 코드가 없는 예외 (벡터 번호) — exceptionHandler가 halt하므로 복귀 없음
 %macro EXC 1
-global IV%1
 IV%1:
     SAVEREG
     mov rdi, %1
@@ -85,7 +83,6 @@ IV%1:
 
 ; 에러 코드가 있는 예외 (벡터 번호)
 %macro EXC_ERRCODE 1
-global IV%1
 IV%1:
     SAVEREG
     mov rdi, %1
@@ -94,17 +91,17 @@ IV%1:
     call exceptionHandler
 %endmacro
 
-; 예외 핸들러
-EXC         00 ; divide error
-EXC         01 ; debug error
-EXC         02 ; NMI
-EXC         03 ; BreakPoint
-EXC         04 ; Overflow
-EXC         05 ; BoundRangeExceeded
-EXC         06 ; InvalidOpcode
-EXC         07 ; DeviceNotAvailable
-EXC_ERRCODE 08 ; DoubleFault
-EXC         09 ; CoprocessorSegmentOverrun
+; 예외 스텁 (0~20)
+EXC         0  ; divide error
+EXC         1  ; debug error
+EXC         2  ; NMI
+EXC         3  ; BreakPoint
+EXC         4  ; Overflow
+EXC         5  ; BoundRangeExceeded
+EXC         6  ; InvalidOpcode
+EXC         7  ; DeviceNotAvailable
+EXC_ERRCODE 8  ; DoubleFault
+EXC         9  ; CoprocessorSegmentOverrun
 EXC_ERRCODE 10 ; InvalidTSS
 EXC_ERRCODE 11 ; SegmentNotPresent
 EXC_ERRCODE 12 ; StackSeg
@@ -115,23 +112,25 @@ EXC         16 ; FPUError
 EXC_ERRCODE 17 ; AlignmentCheck
 EXC         18 ; MachineCheck
 EXC         19 ; SIMDError
-EXC         20 ; 21 이상 예약 벡터도 IDT에서 IV20으로 수렴
+EXC         20 ; 21 이상 예약 벡터도 IV20으로 수렴
 
-; 인터럽트 핸들러
-ISR 32, timerHandler    ; Timer
-ISR 33, keyboardHandler ; Keyboard
-ISR 34, testHandler     ; SlavePIC
-ISR 35, testHandler     ; Serial2
-ISR 36, testHandler     ; Serial1
-ISR 37, testHandler     ; Parallel2
-ISR 38, testHandler     ; Floppy
-ISR 39, testHandler     ; Parallel1
-ISR 40, testHandler     ; RTC
-ISR 41, testHandler
-ISR 42, testHandler
-ISR 43, testHandler
-ISR 44, testHandler     ; Mouse
-ISR 45, testHandler     ; Coprocessor
-ISR 46, disk1Handler    ; HDD1
-ISR 47, disk2Handler    ; HDD2
-ISR 48, testHandler     ; ETCInterrupt
+; 외부 인터럽트 스텁 (32~47): 벡터별 처리는 registerInterruptHandler 등록으로 결정
+%assign vec 32
+%rep 16
+ISR %[vec]
+%assign vec vec+1
+%endrep
+
+; IDT 등록용 스텁 주소 테이블 — 크기는 C의 INTERRUPT_VECTOR_COUNT(arch/HandlerImp.h)와 일치해야 함
+SEGMENT .data
+global vectorStubTable
+vectorStubTable:
+%assign vec 0
+%rep 48
+  %if vec > 20 && vec < 32
+    dq IV20 ; 예약 벡터
+  %else
+    dq IV%[vec]
+  %endif
+%assign vec vec+1
+%endrep

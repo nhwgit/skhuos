@@ -2,7 +2,6 @@
 #include "Print.h"
 #include "arch/Descriptor.h"
 #include "arch/RegControl.h"
-#include "arch/Handler.h"
 #include "mm/Memory.h"
 #include "drivers/Keyboard.h"
 #include "lib/Queue.h"
@@ -28,7 +27,6 @@ void Main(void) {
 
 	initializePIC();
 	setIMR(0);
-	enableInterrupt();
 	puts("PIC initialize");
 	initKeyboard();
 	initMemoryBitmap();
@@ -38,6 +36,7 @@ void Main(void) {
 	initDisk();
 	puts("Disk Initialize");
 	initFAT();
+	enableInterrupt(); // 각 init의 ISR 등록이 끝난 뒤 활성화 (등록 전 IRQ가 미등록 벡터로 빠지는 것 방지)
 	startShell();
 	while(1);
 }

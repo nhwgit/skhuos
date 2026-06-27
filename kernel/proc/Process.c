@@ -2,6 +2,8 @@
 #include "lib/64bit.h"
 #include "Print.h"
 #include "arch/Descriptor.h"
+#include "arch/HandlerImp.h"
+#include "drivers/PIC.h"
 #include "proc/Sync.h"
 #include "arch/ContextSwitching.h"
 #include "lib/Queue.h"
@@ -53,6 +55,11 @@ void setUpProcess(PCB * pcb, const QWORD entryPoint, const QWORD * stackAddress,
 	pcb->context.reg[REG_RFLAGS] |= RFLAGS_IF;
 }
 
+static void timerInterruptHandler(int vectorNumber) {
+	sendEOI(vectorNumber - IRQ_START_OFFSET);
+	timeoutSchedule();
+}
+
 void initScheduler(void) {
 	pidCountIdx = 0;
 	PCB * pcb = (PCB *)(PCB_POOL_ADDRESS+sizeof(PCB)*pidCountIdx);
@@ -62,6 +69,7 @@ void initScheduler(void) {
 	scheduler.runningProcess = pcb;
 	initQueue(&exitProcessQueue, queueBuffer, EXIT_QUEUE_COUNT, sizeof(int)); // link.id 크기와 일치
 	createProcess((QWORD)garbageProcessCollector, 0);
+	registerInterruptHandler(IRQ_START_OFFSET+IRQ_TIMER, timerInterruptHandler);
 }
 
 PCB * createProcess(QWORD entryPoint, QWORD arg) { // 페이징 설정 추가 필요]

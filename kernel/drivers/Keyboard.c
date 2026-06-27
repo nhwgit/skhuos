@@ -1,5 +1,7 @@
 #include "drivers/Keyboard.h"
+#include "drivers/PIC.h"
 #include "arch/portControl.h"
+#include "arch/HandlerImp.h"
 #include "lib/Queue.h"
 #include "proc/Sync.h"
 
@@ -102,9 +104,18 @@ static bool shiftOn;
 static Queue keyQueue = {0}; // ISR와 공유, setIf로 보호(단일 코어)
 static char queueBuffer[QUEUE_COUNT];
 
+static void keyboardInterruptHandler(int vectorNumber) {
+	if(isOutputBufferFull()) {
+		BYTE scanCode = getScanCode();
+		inputQueue(scanCode);
+	}
+	sendEOI(vectorNumber - IRQ_START_OFFSET);
+}
+
 void initKeyboard(void) {
 	initQueue(&keyQueue, queueBuffer, QUEUE_COUNT, sizeof(char));
 	shiftOn = FALSE;
+	registerInterruptHandler(IRQ_START_OFFSET+IRQ_KEYBOARD, keyboardInterruptHandler);
 }
 
 int isOutputBufferFull(void) {
