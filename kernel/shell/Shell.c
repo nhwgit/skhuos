@@ -76,26 +76,25 @@ void startShell(void) {
 	char commandBuffer[100] = {0};
 	printAccountName(accountName);
 	while(1) {
-		if(getQueue(&data)) {
-			if(data==KEY_ENTER) {
-				puts("");
-				executeCommand(commandBuffer);
-				bufferIndex = 0;
-				commandBuffer[bufferIndex] = '\0';
-				puts("");
-				printAccountName(accountName);
-				continue;
-			}
-			else if(data==KEY_BACKSPACE) {
-				if(bufferIndex==0) continue;
-				else commandBuffer[--bufferIndex] = '\0';
-			}
-			else if(data!=0) {
-				commandBuffer[bufferIndex++] = data;
-				commandBuffer[bufferIndex] = '\0';
-			}
-			viewCharacter(data);
+		data = getKey();
+		if(data==KEY_ENTER) {
+			puts("");
+			executeCommand(commandBuffer);
+			bufferIndex = 0;
+			commandBuffer[bufferIndex] = '\0';
+			puts("");
+			printAccountName(accountName);
+			continue;
 		}
+		else if(data==KEY_BACKSPACE) {
+			if(bufferIndex==0) continue;
+			else commandBuffer[--bufferIndex] = '\0';
+		}
+		else if(data!=0) {
+			commandBuffer[bufferIndex++] = data;
+			commandBuffer[bufferIndex] = '\0';
+		}
+		viewCharacter(data);
 	}
 }
 
@@ -184,10 +183,8 @@ static const char * bannerData[] = {
 static void bannerProcess(QWORD line) {
 	const char * data = bannerData[line];
 	for(int i=0; data[i]!=NULL && i<=80; i++) {
-		int cnt=0;
-		while(cnt++ != MULTITASKING_TIME);
+		sleepProcess(MULTITASKING_TIME);
 		viewCharacterXY(data[i], line, i);
-		schedule();
 	}
 	exitProcess();
 }

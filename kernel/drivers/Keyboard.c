@@ -4,6 +4,7 @@
 #include "arch/HandlerImp.h"
 #include "lib/Queue.h"
 #include "proc/Sync.h"
+#include "proc/Process.h"
 
 static BYTE keyMappingTable[89][2] =
 {
@@ -103,6 +104,7 @@ static bool shiftOn;
 
 static Queue keyQueue = {0}; // ISR와 공유, setIf로 보호(단일 코어)
 static char queueBuffer[QUEUE_COUNT];
+static PCB * volatile keyWaiter = NULL; // 키 입력을 기다리는 BLOCKED 프로세스
 
 static void keyboardInterruptHandler(int vectorNumber) {
 	if(isOutputBufferFull()) {
@@ -147,6 +149,7 @@ void inputQueue(BYTE scanCode) {
 	if(ascii!=0) {
 		bool preIf = setIf(FALSE);
 		enQueue(&keyQueue, &ascii);
+		wakeupProcessInInterrupt(keyWaiter);
 		setIf(preIf);
 	}
 }
@@ -156,6 +159,18 @@ bool getQueue(char * data) {
 	bool success = deQueue(&keyQueue, data);
 	setIf(preIf);
 	return success;
+}
+
+char getKey(void) {
+	char data;
+	bool preIf = setIf(FALSE);
+	while(!deQueue(&keyQueue, &data)) { // IF=0이라 확인과 블로킹 사이에 입력을 놓칠 수 없음
+		keyWaiter = getRunningProcess();
+		blockRunningProcess();
+		keyWaiter = NULL;
+	}
+	setIf(preIf);
+	return data;
 }
 
 BYTE scanToASCII(BYTE scanCode) {

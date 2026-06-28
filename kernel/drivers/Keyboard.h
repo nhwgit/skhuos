@@ -68,6 +68,7 @@ BYTE scanToASCII(BYTE scanCode);
 void initKeyboard(void);
 void inputQueue(BYTE scanCode);
 bool getQueue(char * data);
+char getKey(void); // 입력이 없으면 BLOCKED로 대기
 void rebootSystem(void);
 
 #endif

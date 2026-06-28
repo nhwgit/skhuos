@@ -2,15 +2,17 @@
 #include "drivers/PIC.h"
 #include "drivers/PIT.h"
 #include "proc/Sync.h"
+#include "proc/Process.h"
 #include "arch/portControl.h"
 #include "arch/HandlerImp.h"
 #include "Print.h"
 
 static Mutex diskMutex = {0,};
 static DiskInformation disk = {0,};
-// ISR과 waitInterrupt 스핀 루프가 공유 — volatile이 아니면 최적화 시 루프에서 재로드가 생략될 수 있음
+// ISR과 waitInterrupt가 공유 — volatile이 아니면 최적화 시 루프에서 재로드가 생략될 수 있음
 static volatile bool isPrimaryInterruptOccur = FALSE;
 static volatile bool isSecondaryInterruptOccur = FALSE;
+static PCB * volatile diskWaiter[2] = {NULL, NULL}; // [isPrimary] 완료 인터럽트를 기다리는 BLOCKED 프로세스
 #define WAIT_TIMEOUT_MS 500 // 상태 폴링 최대 대기 시간
 
 // [0]=SECONDARY, [1]=PRIMARY (bool 인덱스와 일치)
@@ -24,11 +26,13 @@ static WORD portAddress[2][11] = {{SECONDARY_DATA, SECONDARY_ERROR, SECONDARY_SE
 static void primaryDiskInterruptHandler(int vectorNumber) {
 	isPrimaryInterruptOccur = TRUE;
 	sendEOI(vectorNumber - IRQ_START_OFFSET);
+	wakeupProcessInInterrupt(diskWaiter[TRUE]);
 }
 
 static void secondaryDiskInterruptHandler(int vectorNumber) {
 	isSecondaryInterruptOccur = TRUE;
 	sendEOI(vectorNumber - IRQ_START_OFFSET);
+	wakeupProcessInInterrupt(diskWaiter[FALSE]);
 }
 
 void initDisk(void) {
@@ -51,17 +55,32 @@ static void clearDiskInterruptFlag(bool isPrimary) {
 		isSecondaryInterruptOccur = FALSE;
 }
 
+// 완료 인터럽트까지 BLOCKED 상태로 대기, 타임아웃 시 FALSE
 static bool waitInterrupt(bool isPrimary) {
-	int limit = msToClock(WAIT_TIMEOUT_MS);
-	PITStopwatch watch;
-	startStopwatch(&watch);
-	do {
-		if(isPrimary && isPrimaryInterruptOccur)
-			return TRUE;
-		if(!isPrimary && isSecondaryInterruptOccur)
-			return TRUE;
-	} while(getElapsedClock(&watch) < limit);
-	return FALSE;
+	volatile bool * occurFlag = isPrimary ? &isPrimaryInterruptOccur : &isSecondaryInterruptOccur;
+	bool preIf = setIf(FALSE);
+	if(!preIf) { // 인터럽트 비활성 문맥에서는 잠들면 깨워 줄 주체가 없음 — 폴링 타임아웃만 수행
+		int limit = msToClock(WAIT_TIMEOUT_MS);
+		PITStopwatch watch;
+		startStopwatch(&watch);
+		do {
+			if(*occurFlag)
+				return TRUE;
+		} while(getElapsedClock(&watch) < limit);
+		return FALSE;
+	}
+	QWORD deadline = getTickCount() + (WAIT_TIMEOUT_MS + SLOT_TIME - 1) / SLOT_TIME;
+	while(!*occurFlag) { // IF=0이라 플래그 확인과 블로킹 사이에 인터럽트를 놓칠 수 없음
+		if(getTickCount() >= deadline) {
+			setIf(preIf);
+			return FALSE;
+		}
+		diskWaiter[isPrimary] = getRunningProcess();
+		sleepUntilTick(deadline); // 디스크 ISR가 먼저 깨우거나, 타임아웃 시 타이머가 깨움
+		diskWaiter[isPrimary] = NULL;
+	}
+	setIf(preIf);
+	return TRUE;
 }
 
 static bool waitStatus(bool isPrimary, BYTE mask, BYTE value) {
