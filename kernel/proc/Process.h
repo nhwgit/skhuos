@@ -60,23 +60,32 @@
 
 #define EXIT_QUEUE_COUNT 100
 
+#define PROCESS_STATE_READY		0
+#define PROCESS_STATE_RUNNING	1
+#define PROCESS_STATE_BLOCKED	2
+#define PROCESS_STATE_EXIT		3
+
 #pragma pack(push, 1)
 typedef struct processContext {
 	QWORD reg[24];
 } ProcessContext;
 
 typedef struct pcb {
-	Node link;
+	Node link; // 준비 리스트/sleep 리스트 중 한 곳에만 속하므로 노드 공유
 	//WORD pid;
 	QWORD * pageTableAddress;
 	QWORD stackSize;
 	QWORD * stackAddress;
+	BYTE state;
+	QWORD wakeupTick; // sleep 리스트에 있을 때만 유효
 	ProcessContext context;
 }PCB;
 
 typedef struct processScheduler {
 	PCB * runningProcess;
-	LinkedList processList;
+	PCB * idleProcess; // 준비 리스트가 빌 때만 실행, 리스트에 넣지 않음
+	LinkedList processList; // READY 프로세스만
+	LinkedList sleepList; // 타이머 만료 대기(BLOCKED) 프로세스
 }ProcessScheduler;
 #pragma pack(pop)
 
@@ -88,5 +97,12 @@ void timeoutSchedule(void);
 void exitProcess(void);
 void garbageProcessCollector(void);
 int getRunningPid(void);
+PCB * getRunningProcess(void);
+QWORD getTickCount(void);
+void sleepProcess(QWORD ms);
+void sleepUntilTick(QWORD tick); // IF=0 전제
+void blockRunningProcess(void); // IF=0 전제, 호출 전 대기처(웨이터 포인터 등) 등록 필수
+bool wakeupProcess(PCB * pcb); // IF=0 전제, BLOCKED가 아니면 무시
+void wakeupProcessInInterrupt(PCB * pcb); // ISR 전용: idle 실행 중이면 즉시 선점
 
 #endif

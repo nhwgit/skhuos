@@ -43,14 +43,3 @@ int getElapsedClock(PITStopwatch * watch) {
 	watch->elapsedClock += delta;
 	return watch->elapsedClock;
 }
-
-void sleep(long us) {
-	initializePIT(usToClock(0x0), TRUE);
-	long remainingTime = us;
-	WORD time1 = readCounter0();
-	while(remainingTime>0) {
-		WORD time2 = readCounter0();
-		remainingTime -= ((time1-time2)&0xFFFF);
-		time1 = time2;
-	}
-}

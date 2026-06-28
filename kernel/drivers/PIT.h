@@ -35,7 +35,6 @@ typedef struct pitStopwatch {
 	int elapsedClock;
 } PITStopwatch;
 
-void sleep(long us);
 int usToClock(QWORD us);
 int msToClock(QWORD ms);
 void initializePIT(int clock, bool periodic);
