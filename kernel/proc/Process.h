@@ -71,7 +71,7 @@ typedef struct processContext {
 } ProcessContext;
 
 typedef struct pcb {
-	Node link; // 준비 리스트/sleep 리스트 중 한 곳에만 속하므로 노드 공유
+	Node link; // 준비/sleep/뮤텍스 대기 리스트 중 한 곳에만 속하므로 노드 공유
 	//WORD pid;
 	QWORD * pageTableAddress;
 	QWORD stackSize;

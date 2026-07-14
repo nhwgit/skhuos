@@ -15,38 +15,47 @@ bool setIf(bool interrupt) {
 }
 
 void initMutex(Mutex * mutex) {
-	mutex->available = TRUE;
-	mutex->count = 0;
 	mutex->pid = -1;
+	mutex->count = 0;
+	initList(&(mutex->waitList));
 }
 
 void acquireLock(Mutex * mutex) {
-    int currentPid = getRunningPid();
+	bool preIf = setIf(FALSE);
+	int currentPid = getRunningPid();
 
-    if (mutex->available == FALSE && mutex->pid == currentPid) {
-        mutex->count++;
-        return;
-    }
-
-    while (__sync_bool_compare_and_swap(&(mutex->available), TRUE, FALSE) == FALSE) {
-        schedule();
-    }
-    mutex->pid = currentPid;
-    mutex->count = 1;
+	if(mutex->pid == currentPid)
+		mutex->count++;
+	else if(mutex->pid == -1) {
+		mutex->pid = currentPid;
+		mutex->count = 1;
+	}
+	else {
+		// releaseLock이 소유권을 넘긴 뒤 깨우므로, 깨어난 시점엔 이미 소유자
+		insertList(&(mutex->waitList), getRunningProcess());
+		blockRunningProcess();
+	}
+	setIf(preIf);
 }
 
 void releaseLock(Mutex * mutex) {
-    int currentPid = getRunningPid();
+	bool preIf = setIf(FALSE);
 
-    if (mutex->pid != currentPid || mutex->available == TRUE) {
-        return;
-    }
+	if(mutex->pid != getRunningPid()) {
+		setIf(preIf);
+		return;
+	}
 
-    mutex->count--;
-
-    if (mutex->count == 0) {
-        mutex->pid = -1;
-        __sync_synchronize();
-        mutex->available = TRUE;
-    }
+	if(--mutex->count == 0) {
+		PCB * next = (PCB *)HeadRemove(&(mutex->waitList));
+		if(next == NULL)
+			mutex->pid = -1;
+		else {
+			// 락을 풀지 않고 대기 큐 선두에 직접 이양 — 새 진입자의 새치기(기아) 방지
+			mutex->pid = next->link.id;
+			mutex->count = 1;
+			wakeupProcess(next);
+		}
+	}
+	setIf(preIf);
 }
