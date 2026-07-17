@@ -9,5 +9,6 @@ void enableInterrupt(void);
 void disableInterrupt(void);
 QWORD getRFLAGs(void);
 void halt(void);
+void flushTLB(void); // 페이지 테이블 권한 변경 후 호출
 
 #endif

@@ -1,7 +1,7 @@
 [bits 64]
 
 SEGMENT .text
-global loadGDTR, loadTR, loadIDTR, enableInterrupt, disableInterrupt, getRFLAGs, getCR2, halt
+global loadGDTR, loadTR, loadIDTR, enableInterrupt, disableInterrupt, getRFLAGs, getCR2, halt, flushTLB
 
 loadGDTR:
 	lgdt [rdi]
@@ -34,4 +34,9 @@ getCR2:
 
 halt:
 	hlt
+	ret
+
+flushTLB: ; CR3 재적재로 TLB 전체 무효화 (페이지 권한 변경 후 필수)
+	mov rax, cr3
+	mov cr3, rax
 	ret
