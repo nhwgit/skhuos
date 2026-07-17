@@ -58,6 +58,15 @@
 #define SLOT_TIME 5 // ms
 #define PROCESS_MAXCOUNT	1024
 
+// 유저 모드(링3) 접근 허용 영역: 48~64MB. 그 밖은 PTE U/S=0이라 유저 접근 시 #PF
+#define USER_MEMORY_BASE	0x3000000
+#define USER_CODE_ADDRESS	USER_MEMORY_BASE
+#define USER_CODE_SIZE		0x100000
+#define USER_STACK_BASE		(USER_CODE_ADDRESS+USER_CODE_SIZE)
+#define USER_STACK_SIZE		PROCESS_STACK_SIZE
+#define USER_STACK_INTERVAL	PROCESS_STACK_INTERVAL
+#define USER_MEMORY_END		0x4000000
+
 #define EXIT_QUEUE_COUNT 100
 
 #define PROCESS_STATE_READY		0
@@ -92,6 +101,8 @@ typedef struct processScheduler {
 void setUpProcess(PCB * pcb, const QWORD entryPoint, const QWORD * stackAddress, const QWORD stackSize);
 void initScheduler(void);
 PCB * createProcess(QWORD entry, QWORD arg);
+PCB * createUserProcess(QWORD entry, QWORD arg); // 링3 프로세스 — pid 슬롯 스택은 시스템 콜용 커널 스택으로 사용
+PCB * runUserProgram(const void * image, QWORD size, QWORD arg); // 이미지를 유저 코드 영역에 복사 후 링3 실행
 void schedule(void);
 void timeoutSchedule(void);
 void exitProcess(void);

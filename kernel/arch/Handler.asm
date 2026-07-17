@@ -1,7 +1,7 @@
 [BITS 64]
 SEGMENT .text
 
-extern dispatchInterrupt, exceptionHandler
+extern dispatchInterrupt, exceptionHandler, dispatchSyscall
 
 %macro SAVEREG 0
     push r15
@@ -71,13 +71,14 @@ IV%1:
 
 SAVEREG_SIZE equ 19*8 ; SAVEREG가 쌓는 크기 (GPR 15개 + 세그먼트 4개) — CPU가 쌓은 프레임 접근 오프셋
 
-; 에러 코드가 없는 예외 (벡터 번호) — exceptionHandler가 halt하므로 복귀 없음
+; 에러 코드가 없는 예외 (벡터 번호) — exceptionHandler가 halt 또는 프로세스 종료, 복귀 없음
 %macro EXC 1
 IV%1:
     SAVEREG
     mov rdi, %1
     xor rsi, rsi
-    mov rdx, qword [rsp + SAVEREG_SIZE] ; RIP
+    mov rdx, qword [rsp + SAVEREG_SIZE]     ; RIP
+    mov rcx, qword [rsp + SAVEREG_SIZE + 8] ; CS — 링3에서 온 예외 판별용
     call exceptionHandler
 %endmacro
 
@@ -86,8 +87,9 @@ IV%1:
 IV%1:
     SAVEREG
     mov rdi, %1
-    mov rsi, qword [rsp + SAVEREG_SIZE]     ; 에러 코드
-    mov rdx, qword [rsp + SAVEREG_SIZE + 8] ; RIP
+    mov rsi, qword [rsp + SAVEREG_SIZE]      ; 에러 코드
+    mov rdx, qword [rsp + SAVEREG_SIZE + 8]  ; RIP
+    mov rcx, qword [rsp + SAVEREG_SIZE + 16] ; CS
     call exceptionHandler
 %endmacro
 
@@ -120,6 +122,20 @@ EXC         20 ; 21 이상 예약 벡터도 IV20으로 수렴
 ISR %[vec]
 %assign vec vec+1
 %endrep
+
+; 시스템 콜 게이트(0x81, DPL3) 진입점 — IST가 아닌 TSS RSP0(프로세스별 커널 스택)에서 실행
+; RAX=기능 번호, RDI/RSI/RDX=인자, 반환값은 RAX (번호·인자 위치는 SAVEREG가 쌓는 순서 기준)
+global syscallEntry
+syscallEntry:
+    SAVEREG
+    mov rdi, qword [rsp + 4*8] ; RAX = 기능 번호
+    mov rsi, qword [rsp + 9*8] ; RDI = 인자1
+    mov rdx, qword [rsp + 8*8] ; RSI = 인자2
+    mov rcx, qword [rsp + 7*8] ; RDX = 인자3
+    call dispatchSyscall
+    mov qword [rsp + 4*8], rax ; 반환값을 복원될 RAX 자리에 기록
+    LOADREG
+    iretq
 
 ; IDT 등록용 스텁 주소 테이블 — 크기는 C의 INTERRUPT_VECTOR_COUNT(arch/HandlerImp.h)와 일치해야 함
 SEGMENT .data

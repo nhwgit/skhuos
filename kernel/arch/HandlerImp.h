@@ -26,6 +26,6 @@ typedef void (*InterruptHandler)(int vectorNumber);
 
 void registerInterruptHandler(int vectorNumber, InterruptHandler handler);
 void dispatchInterrupt(int vectorNumber);
-void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip);
+void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip, QWORD cs);
 
 #endif

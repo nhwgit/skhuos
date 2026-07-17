@@ -26,7 +26,10 @@ static void ls(const char * arg);
 static void touch(const char * arg);
 static void rm(const char * arg);
 static void editor(const char * arg);
+static void ring3(const char * arg);
 static void processTest(void);
+
+extern char userProgramStart[], userProgramEnd[]; // user/UserProgram.asm 링3 데모 블롭
 
 static const ShellCommand commandTable[] = {
 		{"help", "help", help},
@@ -40,7 +43,8 @@ static const ShellCommand commandTable[] = {
 		{"ls", "ls", ls},
 		{"touch", "touch fileName", touch},
 		{"rm", "rm fileName", rm},
-		{"editor", "editor fileName", editor}
+		{"editor", "editor fileName", editor},
+		{"ring3", "ring3 [attack]", ring3}
 };
 
 static const char * accountName = "NHW";
@@ -151,6 +155,14 @@ static void editor(const char * arg) {
 	saveVideoMemory();
 	runEditor(arg);
 	loadVideoMemory();
+}
+
+static void ring3(const char * arg) {
+	QWORD attack = (strcmp(arg, "attack")==0);
+	clear();
+	if(runUserProgram(userProgramStart, (QWORD)(userProgramEnd-userProgramStart), attack)==NULL)
+		puts("ring3 fail!");
+	cursorLine(24);
 }
 
 static const char * bannerData[] = {

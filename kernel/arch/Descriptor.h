@@ -28,9 +28,11 @@
 #define IDT_TYPE_INTERRUPT 0x0E
 #define IDT_TYPE_TRAP 0x0F
 
-#define GDT_COUNT 3
-#define IDT_GATED_COUNT 100
+#define GDT_COUNT 5
+#define IDT_GATED_COUNT 130 // 시스템 콜 벡터(0x81)까지 포함
 #define IST_COUNT 1
+
+#define SYSCALL_VECTOR 0x81
 
 //address
 #define GDTR_ADDRESS 0x00510000
@@ -46,7 +48,11 @@
 //descriptor offset
 #define CODE_DESCRIPTOR_OFFSET 0x10
 #define DATA_DESCRIPTOR_OFFSET 0x08
-#define TSS_DESCRIPTOR_OFFSET 0x18
+// 유저는 데이터→코드 순서: SYSCALL/SYSRET 전환 시 STAR 규약(유저 베이스+8=SS, +16=CS)과 호환되는 배치
+#define USER_DATA_DESCRIPTOR_OFFSET 0x18
+#define USER_CODE_DESCRIPTOR_OFFSET 0x20
+#define TSS_DESCRIPTOR_OFFSET 0x28
+#define RPL_USER 0x03
 
 #pragma pack(push, 1)
 typedef struct gdt {
@@ -96,5 +102,6 @@ void initializeTSSDescriptor(void);
 void initializeTSS(void);
 void initializeIDTR(void);
 void initializeIDT(void);
+void setTSSRsp0(QWORD rsp0); // 시스템 콜(링3→0) 진입 시 사용할 커널 스택 — 컨텍스트 스위칭마다 갱신
 
 #endif

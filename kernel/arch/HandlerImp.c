@@ -3,6 +3,8 @@
 #include "arch/HandlerImp.h"
 #include "arch/CPU.h"
 #include "arch/RegControl.h"
+#include "arch/Descriptor.h"
+#include "proc/Process.h"
 
 static const char * exceptionNames[] = {
 	"#DE Divide Error",
@@ -46,8 +48,19 @@ void dispatchInterrupt(int vectorNumber) {
 	handler(vectorNumber);
 }
 
-void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip) {
+void exceptionHandler(int vectorNumber, QWORD errorCode, QWORD rip, QWORD cs) {
 	disableInterrupt();
+	if((cs & RPL_USER) == RPL_USER) { // 링3 예외는 시스템 정지 대신 해당 프로세스만 종료
+		moveToNextLine();
+		printString("Ring3 process(pid ");
+		printInt(getRunningPid(), 10);
+		printString(") killed: ");
+		printString(exceptionNames[vectorNumber]);
+		printString(" RIP: 0x");
+		printHex(rip);
+		moveToNextLine();
+		exitProcess(); // 복귀 없음 — 다음 프로세스로 전환
+	}
 	moveToNextLine();
 	printString("==== Exception: ");
 	printString(exceptionNames[vectorNumber]);

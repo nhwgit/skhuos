@@ -24,18 +24,25 @@ void initializeIDTR(void) {
 	idtr->reserved2 = 0;
 }
 
+static void setIDTGate(IDT * entry, QWORD isr, BYTE ist, BYTE flag) {
+	entry->offset0To15 = isr & 0x0000FFFF;
+	entry->segment = CODE_DESCRIPTOR_OFFSET;
+	entry->ist = ist;
+	entry->flag = flag;
+	entry->offset16To31 = (isr & 0xFFFF0000) >> 16;
+	entry->offset32To63 = isr >> 32;
+	entry->reserved = 0;
+}
+
 void initializeIDT(void) {
 	IDT * idt = (IDT *)IDT_ADDRESS;
 	for(int i=0; i<IDT_GATED_COUNT; i++) {
 		QWORD isr = (i<INTERRUPT_VECTOR_COUNT) ? vectorStubTable[i] : vectorStubTable[RESERVED_VECTOR];
-		idt[i].offset0To15 = isr & 0x0000FFFF;
-		idt[i].segment = CODE_DESCRIPTOR_OFFSET;
-		idt[i].ist = IST_COUNT & 0x07;
-		idt[i].flag = IDT_FLAG_P | IDT_FLAG_DPL0 | IDT_TYPE_INTERRUPT;
-		idt[i].offset16To31 = (isr & 0xFFFF0000) >> 16;
-		idt[i].offset32To63 = isr >> 32;
-		idt[i].reserved = 0;
+		setIDTGate(&idt[i], isr, IST_COUNT & 0x07, IDT_FLAG_P | IDT_FLAG_DPL0 | IDT_TYPE_INTERRUPT);
 	}
+	// 시스템 콜 게이트: DPL3로 유저 호출 허용. IST 대신 TSS RSP0(프로세스별 커널 스택)를 쓰는 이유는
+	// 블로킹 시스템 콜 도중 발생하는 인터럽트(IST1 공유)가 시스템 콜 프레임을 덮지 않게 하기 위함
+	setIDTGate(&idt[SYSCALL_VECTOR], (QWORD)syscallEntry, 0, IDT_FLAG_P | IDT_FLAG_DPL3 | IDT_TYPE_INTERRUPT);
 }
 
 void initializeGDTR(void) {
@@ -58,6 +65,12 @@ void initializeGDT(void) {
 	gdt[2].lower4Byte = segmentSize & 0x0000FFFF;
 	gdt[2].upper4Byte = GDT_FLAG_P | GDT_FLAG_DPL0 | GDT_FLAG_G | GDT_FLAG_L | GDT_FLAG_S | \
 			GDT_TYPE_CODE  | (segmentSize & 0xF0000);
+	gdt[3].lower4Byte = segmentSize & 0x0000FFFF;
+	gdt[3].upper4Byte = GDT_FLAG_P | GDT_FLAG_DPL3 | GDT_FLAG_G | GDT_FLAG_L | GDT_FLAG_S | \
+			GDT_TYPE_DATA  | (segmentSize & 0xF0000);
+	gdt[4].lower4Byte = segmentSize & 0x0000FFFF;
+	gdt[4].upper4Byte = GDT_FLAG_P | GDT_FLAG_DPL3 | GDT_FLAG_G | GDT_FLAG_L | GDT_FLAG_S | \
+			GDT_TYPE_CODE  | (segmentSize & 0xF0000);
 }
 
 void initializeTSSDescriptor(void) {
@@ -76,4 +89,8 @@ void initializeTSS(void) {
 	InitializeMemory(TSS_ADDRESS, TSS_ADDRESS+sizeof(TSS));
 	tss->ist[0] = IST_START_ADDRESS+IST_SIZE;
 	tss->ioMapAddress = 0xFFFF;
+}
+
+void setTSSRsp0(QWORD rsp0) {
+	((TSS *)TSS_ADDRESS)->rsp[0] = rsp0;
 }
